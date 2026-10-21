@@ -9,71 +9,71 @@
 // endpoint modules without coupling.
 // =========================
 
-import type { HttpClient } from "./http_client";
-import type { WsClient } from "./ws_client";
+import type { http_client } from "./http_client";
+import type { ws_client } from "./ws_client";
 
-import { bind_tokens, type TokensEndpoints } from "../functions/tokens/bind_tokens";
-import { bind_trades, type TradesEndpoints } from "../functions/trades/bind_trades";
+import { bind_tokens, type tokens_endpoints } from "../functions/tokens/bind_tokens";
+import { bind_trades, type trades_endpoints } from "../functions/trades/bind_trades";
 import {
   bind_transfers,
-  type TransfersEndpoints,
+  type transfers_endpoints,
 } from "../functions/transfers/bind_transfers";
 import {
   bind_activity,
-  type ActivityEndpoints,
+  type activity_endpoints,
 } from "../functions/activity/bind_activity";
 import {
   bind_candles,
-  type CandlesEndpoints,
+  type candles_endpoints,
 } from "../functions/candles/bind_candles";
 import {
   bind_balances,
-  type BalancesEndpoints,
+  type balances_endpoints,
 } from "../functions/balances/bind_balances";
 import {
   bind_holders,
-  type HoldersEndpoints,
+  type holders_endpoints,
 } from "../functions/holders/bind_holders";
 import {
   bind_positions,
-  type PositionsEndpoints,
+  type positions_endpoints,
 } from "../functions/positions/bind_positions";
 import {
   bind_accounts,
-  type AccountsEndpoints,
+  type accounts_endpoints,
 } from "../functions/accounts/bind_accounts";
-import { bind_prices, type PricesEndpoints } from "../functions/prices/bind_prices";
-import { bind_misc, type MiscEndpoints } from "../functions/misc/bind_misc";
+import { bind_prices, type prices_endpoints } from "../functions/prices/bind_prices";
+import { bind_misc, type misc_endpoints } from "../functions/misc/bind_misc";
 
 export type {
-  TokensEndpoints,
-  TradesEndpoints,
-  TransfersEndpoints,
-  ActivityEndpoints,
-  CandlesEndpoints,
-  BalancesEndpoints,
-  HoldersEndpoints,
-  PositionsEndpoints,
-  AccountsEndpoints,
-  PricesEndpoints,
-  MiscEndpoints,
+  tokens_endpoints,
+  trades_endpoints,
+  transfers_endpoints,
+  activity_endpoints,
+  candles_endpoints,
+  balances_endpoints,
+  holders_endpoints,
+  positions_endpoints,
+  accounts_endpoints,
+  prices_endpoints,
+  misc_endpoints,
 };
 
 export const create_endpoints = (
-  http: HttpClient,
-  ws: WsClient,
+  http: http_client,
+  ws: ws_client,
 ): {
-  tokens: TokensEndpoints;
-  trades: TradesEndpoints;
-  transfers: TransfersEndpoints;
-  activity: ActivityEndpoints;
-  candles: CandlesEndpoints;
-  balances: BalancesEndpoints;
-  holders: HoldersEndpoints;
-  positions: PositionsEndpoints;
-  accounts: AccountsEndpoints;
-  prices: PricesEndpoints;
-  misc: MiscEndpoints;
+  tokens: tokens_endpoints;
+  trades: trades_endpoints;
+  transfers: transfers_endpoints;
+  activity: activity_endpoints;
+  candles: candles_endpoints;
+  balances: balances_endpoints;
+  holders: holders_endpoints;
+  positions: positions_endpoints;
+  accounts: accounts_endpoints;
+  prices: prices_endpoints;
+  misc: misc_endpoints;
 } => ({
   tokens: bind_tokens(http, ws),
   trades: bind_trades(http, ws),

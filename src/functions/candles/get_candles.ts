@@ -3,17 +3,17 @@
 // `time`, `usd.{open,high,low,close,volume?}`, optionally `near.*`.
 // =========================
 
-import type { HttpClient } from "../../client/http_client";
+import type { http_client } from "../../client/http_client";
 import type {
-  CandlesGetParams,
-  CandlesResponse,
+  candles_get_params,
+  candles_response,
 } from "../../types/candle";
 
 export const get_candles = async (
-  http: HttpClient,
-  params: CandlesGetParams,
-): Promise<CandlesResponse> => {
-  return http.get<CandlesResponse>(
+  http: http_client,
+  params: candles_get_params,
+): Promise<candles_response> => {
+  return http.get<candles_response>(
     "/candles",
     params as unknown as Record<string, unknown>,
   );

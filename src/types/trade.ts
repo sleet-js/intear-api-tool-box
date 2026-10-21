@@ -4,9 +4,9 @@
 // row tuple narrowed by the requested `fields`.
 // =========================
 
-import type { DecimalString } from "../helpers/brand";
+import type { DECIMAL_STRING } from "../helpers/brand";
 
-export type TradeValueByField = {
+export type trade_value_by_field = {
   id: number;
   height: number;
   timestamp_millis: number;
@@ -16,60 +16,60 @@ export type TradeValueByField = {
   transaction_id: string;
   receipt_id: string;
   token_in: string | null;
-  amount_in: DecimalString | null;
+  amount_in: DECIMAL_STRING | null;
   token_out: string | null;
-  amount_out: DecimalString | null;
+  amount_out: DECIMAL_STRING | null;
   token: string;
-  amount: DecimalString;
+  amount: DECIMAL_STRING;
   counterparty: string;
-  counterparty_amount: DecimalString;
-  side: TradeSide;
-  usd_value: DecimalString | null;
+  counterparty_amount: DECIMAL_STRING;
+  side: trade_side;
+  usd_value: DECIMAL_STRING | null;
   referrer: string | null;
 };
 
-export type TradeField = keyof TradeValueByField;
-export type TradeRequestedField = Exclude<TradeField, "id" | "height" | "timestamp_millis">;
-export type TradeFieldValue<F extends TradeRequestedField> = TradeValueByField[F];
-export type TradeRow<F extends readonly TradeRequestedField[]> = readonly [
+export type trade_field = keyof trade_value_by_field;
+export type trade_requested_field = Exclude<trade_field, "id" | "height" | "timestamp_millis">;
+export type trade_field_value<f extends trade_requested_field> = trade_value_by_field[f];
+export type trade_row<f extends readonly trade_requested_field[]> = readonly [
   number,
-  ...{ [K in keyof F]: F[K] extends TradeRequestedField ? TradeValueByField[F[K]] : never },
+  ...{ [k in keyof f]: f[k] extends trade_requested_field ? trade_value_by_field[f[k]] : never },
 ];
 
 export const TRADE_SIDES = ["sell", "buy", "add_liquidity", "remove_liquidity"] as const;
-export type TradeSide = (typeof TRADE_SIDES)[number];
-export const is_trade_side = (s: string): s is TradeSide =>
+export type trade_side = (typeof TRADE_SIDES)[number];
+export const is_trade_side = (s: string): s is trade_side =>
   (TRADE_SIDES as readonly string[]).includes(s);
 
 export const MIN_USD_VALUES = [10, 50, 100, 500, 1000, 5000, 10_000] as const;
-export type MinUsd = (typeof MIN_USD_VALUES)[number];
+export type min_usd = (typeof MIN_USD_VALUES)[number];
 
-export interface TradesFilters<F extends readonly TradeRequestedField[]> {
-  fields: F;
+export interface trades_filters<f extends readonly trade_requested_field[]> {
+  fields: f;
   token?: string | readonly string[];
   parent?: string | readonly string[];
   counterparty?: string;
   trader?: string;
-  side?: TradeSide;
+  side?: trade_side;
   include_liquidity?: boolean;
-  min_usd?: MinUsd;
+  min_usd?: min_usd;
 }
 
-export type TradesOrder = "newest" | "oldest";
+export type trades_order = "newest" | "oldest";
 
-export interface TradesQueryParams<F extends readonly TradeRequestedField[]> extends TradesFilters<F> {
+export interface trades_query_params<f extends readonly trade_requested_field[]> extends trades_filters<f> {
   limit?: number;
   cursor?: string;
   after_millis?: number;
   before_millis?: number;
-  order?: TradesOrder;
+  order?: trades_order;
 }
 
-export interface TradesQueryResponse<F extends readonly TradeRequestedField[]> {
+export interface trades_query_response<f extends readonly trade_requested_field[]> {
   height: number;
   timestamp_millis: number;
-  columns: readonly ["id", ...F];
-  rows: ReadonlyArray<TradeRow<F>>;
+  columns: readonly ["id", ...f];
+  rows: ReadonlyArray<trade_row<f>>;
   next_cursor: string | null;
   latest_id: number;
 }
@@ -77,16 +77,16 @@ export interface TradesQueryResponse<F extends readonly TradeRequestedField[]> {
 // =========================
 // Subscribe: history-then-live. Pass either `history` or `after_id`, not both.
 // =========================
-export interface TradesSubscribeParams<F extends readonly TradeRequestedField[]> extends TradesFilters<F> {
+export interface trades_subscribe_params<f extends readonly trade_requested_field[]> extends trades_filters<f> {
   history?: number;
   after_id?: number;
 }
 
-export type TradesSubscribeResponse<F extends readonly TradeRequestedField[]> =
-  TradesQueryResponse<F>;
+export type trades_subscribe_response<f extends readonly trade_requested_field[]> =
+  trades_query_response<f>;
 
-export type TradePush<F extends readonly TradeRequestedField[]> = {
+export type trade_push<f extends readonly trade_requested_field[]> = {
   height: number;
   timestamp_millis: number;
-  rows: ReadonlyArray<TradeRow<F>>;
+  rows: ReadonlyArray<trade_row<f>>;
 };

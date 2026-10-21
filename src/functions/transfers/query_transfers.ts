@@ -4,18 +4,18 @@
 // include `include_transactions: true` to mix transfers and transactions.
 // =========================
 
-import type { HttpClient } from "../../client/http_client";
+import type { http_client } from "../../client/http_client";
 import type {
-  TransferRequestedField,
-  TransfersQueryParams,
-  TransfersQueryResponse,
+  transfer_requested_field,
+  transfers_query_params,
+  transfers_query_response,
 } from "../../types/transfer";
 
-export const query_transfers = async <F extends readonly TransferRequestedField[]>(
-  http: HttpClient,
-  params: TransfersQueryParams<F>,
-): Promise<TransfersQueryResponse<F>> => {
-  return http.get<TransfersQueryResponse<F>>(
+export const query_transfers = async <f extends readonly transfer_requested_field[]>(
+  http: http_client,
+  params: transfers_query_params<f>,
+): Promise<transfers_query_response<f>> => {
+  return http.get<transfers_query_response<f>>(
     "/transfers",
     params as unknown as Record<string, unknown>,
   );

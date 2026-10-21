@@ -4,19 +4,19 @@
 // don't exist, `"0"` before the first price (or always for USDt).
 // =========================
 
-import type { HttpClient } from "../../client/http_client";
+import type { http_client } from "../../client/http_client";
 import type {
-  PricesAtParams,
-  PricesAtResponse,
+  prices_at_params,
+  prices_at_response,
 } from "../../types/schema";
 
 export const prices_at = async (
-  http: HttpClient,
-  params: PricesAtParams,
-): Promise<PricesAtResponse> => {
+  http: http_client,
+  params: prices_at_params,
+): Promise<prices_at_response> => {
   // Translate to the `at=<token>:<timestamp>` shape that the server expects.
   const at = params.queries
     .map((q) => `${encodeURIComponent(q.token)}:${q.timestamp_millis}`)
     .join(",");
-  return http.get<PricesAtResponse>("/prices/at", { at });
+  return http.get<prices_at_response>("/prices/at", { at });
 };

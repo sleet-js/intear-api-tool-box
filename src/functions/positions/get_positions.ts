@@ -3,17 +3,17 @@
 // positions built from its swap history.
 // =========================
 
-import type { HttpClient } from "../../client/http_client";
+import type { http_client } from "../../client/http_client";
 import type {
-  PositionsGetParams,
-  PositionsResponse,
+  positions_get_params,
+  positions_response,
 } from "../../types/position";
 
 export const get_positions = async (
-  http: HttpClient,
-  params: PositionsGetParams,
-): Promise<PositionsResponse> =>
-  http.get<PositionsResponse>(
+  http: http_client,
+  params: positions_get_params,
+): Promise<positions_response> =>
+  http.get<positions_response>(
     "/positions",
     params as unknown as Record<string, unknown>,
   );

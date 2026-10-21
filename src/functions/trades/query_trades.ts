@@ -4,18 +4,18 @@
 // from a time toward the present.
 // =========================
 
-import type { HttpClient } from "../../client/http_client";
+import type { http_client } from "../../client/http_client";
 import type {
-  TradeRequestedField,
-  TradesQueryParams,
-  TradesQueryResponse,
+  trade_requested_field,
+  trades_query_params,
+  trades_query_response,
 } from "../../types/trade";
 
-export const query_trades = async <F extends readonly TradeRequestedField[]>(
-  http: HttpClient,
-  params: TradesQueryParams<F>,
-): Promise<TradesQueryResponse<F>> => {
-  return http.get<TradesQueryResponse<F>>(
+export const query_trades = async <f extends readonly trade_requested_field[]>(
+  http: http_client,
+  params: trades_query_params<f>,
+): Promise<trades_query_response<f>> => {
+  return http.get<trades_query_response<f>>(
     "/trades",
     params as unknown as Record<string, unknown>,
   );

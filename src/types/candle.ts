@@ -2,9 +2,9 @@
 // Candles (a.k.a. price chart bars).
 // =========================
 
-import type { DecimalString } from "../helpers/brand";
+import type { DECIMAL_STRING } from "../helpers/brand";
 
-export type CandleResolution =
+export type candle_resolution =
   | "1S"
   | "1"
   | "1m"
@@ -25,53 +25,53 @@ export type CandleResolution =
   | "7d"
   | "1w";
 
-export type CandleSeriesField = "open" | "high" | "low" | "close" | "volume";
-export type CandleSeries = readonly CandleSeriesField[];
+export type candle_series_field = "open" | "high" | "low" | "close" | "volume";
+export type candle_series = readonly candle_series_field[];
 
-export type CandleQuote = "usd" | "near" | readonly ["usd", "near"];
+export type candle_quote = "usd" | "near" | readonly ["usd", "near"];
 
-export interface CandleSeriesData {
-  open?: readonly (DecimalString | null)[];
-  high?: readonly (DecimalString | null)[];
-  low?: readonly (DecimalString | null)[];
-  close?: readonly (DecimalString | null)[];
-  volume?: readonly (DecimalString | null)[];
+export interface candle_series_data {
+  open?: readonly (DECIMAL_STRING | null)[];
+  high?: readonly (DECIMAL_STRING | null)[];
+  low?: readonly (DECIMAL_STRING | null)[];
+  close?: readonly (DECIMAL_STRING | null)[];
+  volume?: readonly (DECIMAL_STRING | null)[];
 }
 
-export interface CandleTokenData {
+export interface candle_token_data {
   time: readonly number[];
-  usd?: CandleSeriesData;
-  near?: CandleSeriesData;
+  usd?: candle_series_data;
+  near?: candle_series_data;
 }
 
-export interface CandlesResponse {
+export interface candles_response {
   height: number;
   timestamp_millis: number;
-  tokens: Readonly<Record<string, CandleTokenData>>;
+  tokens: Readonly<Record<string, candle_token_data>>;
   missing: readonly string[];
 }
 
-export interface CandlesGetParams {
+export interface candles_get_params {
   tokens: readonly string[];
-  resolution: CandleResolution;
-  quote?: CandleQuote;
-  series?: CandleSeries;
+  resolution: candle_resolution;
+  quote?: candle_quote;
+  series?: candle_series;
   count_back?: number;
   to_millis?: number;
 }
 
-export interface CandlesSubscribeParams {
+export interface candles_subscribe_params {
   tokens: readonly string[];
-  resolution: CandleResolution;
-  quote?: CandleQuote;
-  series?: CandleSeries;
+  resolution: candle_resolution;
+  quote?: candle_quote;
+  series?: candle_series;
   count_back?: number;
 }
 
-export type CandlesSubscribeResponse = CandlesResponse;
+export type candles_subscribe_response = candles_response;
 
-export type CandlePush = {
+export type candle_push = {
   height: number;
   timestamp_millis: number;
-  tokens: Readonly<Record<string, CandleTokenData>>;
+  tokens: Readonly<Record<string, candle_token_data>>;
 };

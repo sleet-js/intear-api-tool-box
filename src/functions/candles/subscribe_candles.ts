@@ -3,19 +3,19 @@
 // block; new candles start with each new window.
 // =========================
 
-import type { WsClient, WsSubscriptionHandle } from "../../client/ws_client";
+import type { ws_client, ws_subscription_handle } from "../../client/ws_client";
 import type {
-  CandlesSubscribeParams,
-  CandlesSubscribeResponse,
-  CandlePush,
+  candles_subscribe_params,
+  candles_subscribe_response,
+  candle_push,
 } from "../../types/candle";
-import { SubscriptionImpl, type Subscription } from "../../helpers/subscribe";
+import { subscription_impl, type subscription } from "../../helpers/subscribe";
 
 export const subscribe_candles = (
-  ws: WsClient,
-  params: CandlesSubscribeParams,
-): Subscription<CandlePush, CandlesSubscribeResponse> => {
-  const sub = new SubscriptionImpl<CandlePush, CandlesSubscribeResponse>({
+  ws: ws_client,
+  params: candles_subscribe_params,
+): subscription<candle_push, candles_subscribe_response> => {
+  const sub = new subscription_impl<candle_push, candles_subscribe_response>({
     unsubscribe_fn: async () => {
       const id = handle.get_id?.();
       if (id == null) return;
@@ -23,13 +23,13 @@ export const subscribe_candles = (
     },
   });
 
-  const handle: WsSubscriptionHandle = {
+  const handle: ws_subscription_handle = {
     id: -1,
     method: "candles.subscribe",
     params,
     get_id: () => null,
-    set_result: (r) => sub.set_result(r as CandlesSubscribeResponse),
-    push: (p) => sub.push(p as CandlePush),
+    set_result: (r) => sub.set_result(r as candles_subscribe_response),
+    push: (p) => sub.push(p as candle_push),
     end: (code, message) => sub.end(code, message),
     unsubscribe: async () => {
       const id = handle.get_id?.();

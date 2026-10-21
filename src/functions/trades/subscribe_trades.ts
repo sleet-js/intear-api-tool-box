@@ -4,20 +4,20 @@
 // trades, oldest first, in the same columns as the result.
 // =========================
 
-import type { WsClient, WsSubscriptionHandle } from "../../client/ws_client";
+import type { ws_client, ws_subscription_handle } from "../../client/ws_client";
 import type {
-  TradeRequestedField,
-  TradesSubscribeParams,
-  TradesSubscribeResponse,
-  TradePush,
+  trade_requested_field,
+  trades_subscribe_params,
+  trades_subscribe_response,
+  trade_push,
 } from "../../types/trade";
-import { SubscriptionImpl, type Subscription } from "../../helpers/subscribe";
+import { subscription_impl, type subscription } from "../../helpers/subscribe";
 
-export const subscribe_trades = <F extends readonly TradeRequestedField[]>(
-  ws: WsClient,
-  params: TradesSubscribeParams<F>,
-): Subscription<TradePush<F>, TradesSubscribeResponse<F>> => {
-  const sub = new SubscriptionImpl<TradePush<F>, TradesSubscribeResponse<F>>({
+export const subscribe_trades = <f extends readonly trade_requested_field[]>(
+  ws: ws_client,
+  params: trades_subscribe_params<f>,
+): subscription<trade_push<f>, trades_subscribe_response<f>> => {
+  const sub = new subscription_impl<trade_push<f>, trades_subscribe_response<f>>({
     unsubscribe_fn: async () => {
       const id = handle.get_id?.();
       if (id == null) return;
@@ -25,13 +25,13 @@ export const subscribe_trades = <F extends readonly TradeRequestedField[]>(
     },
   });
 
-  const handle: WsSubscriptionHandle = {
+  const handle: ws_subscription_handle = {
     id: -1,
     method: "trades.subscribe",
     params,
     get_id: () => null,
-    set_result: (r) => sub.set_result(r as TradesSubscribeResponse<F>),
-    push: (p) => sub.push(p as TradePush<F>),
+    set_result: (r) => sub.set_result(r as trades_subscribe_response<f>),
+    push: (p) => sub.push(p as trade_push<f>),
     end: (code, message) => sub.end(code, message),
     unsubscribe: async () => {
       const id = handle.get_id?.();

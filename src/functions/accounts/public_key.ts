@@ -3,13 +3,13 @@
 // Accepts ED25519, secp256k1, or an ML-DSA-65 handle.
 // =========================
 
-import type { HttpClient } from "../../client/http_client";
-import type { AccountsByPublicKeyResponse } from "../../types/account";
+import type { http_client } from "../../client/http_client";
+import type { accounts_by_public_key_response } from "../../types/account";
 
 export const get_accounts_by_public_key = async (
-  http: HttpClient,
+  http: http_client,
   public_key: string,
-): Promise<AccountsByPublicKeyResponse> => {
+): Promise<accounts_by_public_key_response> => {
   const encoded = encodeURIComponent(public_key);
-  return http.get<AccountsByPublicKeyResponse>(`/public_key/${encoded}`);
+  return http.get<accounts_by_public_key_response>(`/public_key/${encoded}`);
 };

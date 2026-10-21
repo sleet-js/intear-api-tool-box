@@ -17,9 +17,9 @@ npm install @sleet-js/intear-api-tool-box
 ## Usage
 
 ```ts
-import { IntearApi } from "@sleet-js/intear-api-tool-box";
+import { intear_api } from "@sleet-js/intear-api-tool-box";
 
-const api = new IntearApi();
+const api = new intear_api();
 
 // HTTP: one-shot query
 const tokens = await api.tokens.get({
@@ -29,9 +29,9 @@ const tokens = await api.tokens.get({
   limit: 20,
 });
 for (const row of tokens.rows) {
-  // row[0]: string (account_id)
-  // row[1]: string (symbol)
-  // row[2]: DecimalString (price_usd)
+  // row[0]: string        (account_id)
+  // row[1]: string        (symbol)
+  // row[2]: DECIMAL_STRING (price_usd)
 }
 
 // WebSocket: live updates
@@ -50,47 +50,41 @@ for await (const push of sub) {
 
 ## Endpoint groups
 
-| Property          | Endpoints                                     |
-| ----------------- | --------------------------------------------- |
-| `api.tokens`      | `get`, `search`, `subscribe`, `update`        |
-| `api.trades`      | `query`, `subscribe`                          |
-| `api.transfers`   | `query`, `subscribe`                          |
-| `api.activity`    | `query`, `subscribe`                          |
-| `api.candles`     | `get`, `subscribe`                            |
-| `api.balances`    | `get`, `subscribe`                            |
-| `api.holders`     | `get`, `subscribe`                            |
-| `api.positions`   | `get`                                         |
-| `api.accounts`    | `search`, `by_public_key`, `key_stats`        |
-| `api.prices`      | `at`                                          |
+| Property          | Endpoints                                          |
+| ----------------- | -------------------------------------------------- |
+| `api.tokens`      | `get`, `search`, `subscribe`, `update`             |
+| `api.trades`      | `query`, `subscribe`                               |
+| `api.transfers`   | `query`, `subscribe`                               |
+| `api.activity`    | `query`, `subscribe`                               |
+| `api.candles`     | `get`, `subscribe`                                 |
+| `api.balances`    | `get`, `subscribe`                                 |
+| `api.holders`     | `get`, `subscribe`                                 |
+| `api.positions`   | `get`                                              |
+| `api.accounts`    | `search`, `by_public_key`, `key_stats`             |
+| `api.prices`      | `at`                                               |
 | `api.misc`        | `cosmetics`, `schema`, `icon_url`, `table_to_objects` |
 
 ## Subscriptions
 
-Every `.subscribe(...)` call returns a `Subscription<TPush, TResult>` with:
+Every `.subscribe(...)` call returns a `subscription<t_push, t_result>` with:
 
-- `sub.result: Promise<TResult>` — resolves once with the initial snapshot.
-- `async iterator` — yields pushes forever until the server ends or you call `sub.close()`.
+- `sub.result: Promise<t_result>` — resolves once with the initial snapshot.
+- async iterator — yields pushes forever until the server ends or you call `sub.close()`.
 - `sub.close()` — sends `unsubscribe` and ends iteration.
 
-The `TokenSubscription` (returned by `api.tokens.subscribe`) extends this with `update({ add, remove })` for adjusting a `tokens.subscribe` in place.
+The `token_subscription` (returned by `api.tokens.subscribe`) extends this with `update({ add, remove })` for adjusting a `tokens.subscribe` in place.
 
-## Tests / runtime checks against the live API
+## Example scripts
 
-The Intear API is versioned, so this SDK's types are checked against the docs at `/api/llms-full.txt`. Live response shapes are validated against the docs as the docs change. If you find a shape mismatch, open an issue with the offending response.
-
-## Bins
-
-The repo ships with `bin/*.ts` scripts that exercise the SDK against the live API. They're not tests — they're inspection tools you run to verify the SDK works and to look at real on-chain data.
+The `bin/` directory has runnable CLI examples against the live API. See [`bin/README.md`](./bin/README.md).
 
 ```sh
-bun run overview          # tokens, candles, balances, positions, accounts, trades, holders
-bun run tokens:print      # live tokens.subscribe: snapshot + first push
-bun run trades:print      # live trades.subscribe: history + first live push
-bun run schema            # full Intear API schema (method paths, thresholds, limits)
-bun run icons             # top-3 tokens by 24h volume + their public icon URLs
+bun run bin/token_info.ts wrap.near
+bun run bin/top_tokens.ts --sort=-volume_usd_24h --limit 10
+bun run bin/live_trades.ts wrap.near        # Ctrl+C to exit
 ```
 
-Unit tests for the URL encoder live in `tests/`:
+## Unit tests
 
 ```sh
 bun test

@@ -1,27 +1,27 @@
 // =========================
 // Strict, per-field types for tokens.
 //
-// Design: every known token field has its own entry in `TokenValueByField`.
-// `TokenField` is the union of keys. `TokenValue<F>` looks up the field's TS
-// type. `TokenRow<F>` is the tuple type returned for a `fields: F` request:
+// Design: every known token field has its own entry in `token_value_by_field`.
+// `token_field` is the union of keys. `token_value<F>` looks up the field's TS
+// type. `token_row<F>` is the tuple type returned for a `fields: F` request:
 //
 //   const t = await client.tokens.get({ fields: ['symbol','price_usd'], ids: ['wrap.near'] });
 //   const row = t.rows[0]; // readonly ['wrap.near', 'wNEAR', '4.815189744118901']
 //   row[0] is string      // account_id (always first)
 //   row[1] is string      // symbol
-//   row[2] is DecimalString // price_usd
+//   row[2] is DECIMAL_STRING // price_usd
 //
 // Fields not in the API docs are typed as `unknown` so missing definitions
 // surface during development instead of silently slipping to `any`.
 // =========================
 
-import type { DecimalString, IconHash } from "../helpers/brand";
+import type { DECIMAL_STRING, ICON_HASH } from "../helpers/brand";
 import type {
-  MinChangeThreshold,
-  Reputation,
+  min_change_threshold,
+  reputation,
 } from "./common";
 
-export type TokenValueByField = {
+export type token_value_by_field = {
   account_id: string;
   name: string;
   symbol: string;
@@ -29,26 +29,26 @@ export type TokenValueByField = {
   reference: string | null;
   icon: string | null;
   thumbnail: string | null;
-  icon_hash: IconHash | null;
-  price_usd: DecimalString;
-  price_usd_raw: DecimalString;
-  price_usd_hardcoded: DecimalString;
-  price_near: DecimalString;
-  ath_price_usd_raw: DecimalString;
+  icon_hash: ICON_HASH | null;
+  price_usd: DECIMAL_STRING;
+  price_usd_raw: DECIMAL_STRING;
+  price_usd_hardcoded: DECIMAL_STRING;
+  price_near: DECIMAL_STRING;
+  ath_price_usd_raw: DECIMAL_STRING;
   main_pool: string | null;
   main_pool_url: string | null;
-  liquidity: DecimalString;
+  liquidity: DECIMAL_STRING;
   liquidity_usd: number;
   market_cap_usd: number;
   fdv_usd: number;
-  total_supply: DecimalString;
-  circulating_supply: DecimalString;
-  circulating_supply_excluding_team: DecimalString;
-  total_supply_with_decimals: DecimalString;
-  circulating_supply_with_decimals: DecimalString;
-  circulating_supply_excluding_team_with_decimals: DecimalString;
+  total_supply: DECIMAL_STRING;
+  circulating_supply: DECIMAL_STRING;
+  circulating_supply_excluding_team: DECIMAL_STRING;
+  total_supply_with_decimals: DECIMAL_STRING;
+  circulating_supply_with_decimals: DECIMAL_STRING;
+  circulating_supply_excluding_team_with_decimals: DECIMAL_STRING;
   holders: number;
-  reputation: Reputation;
+  reputation: reputation;
   socials: Record<string, string> | null;
   description: string | null;
   dev: string | null;
@@ -75,11 +75,11 @@ export type TokenValueByField = {
   volume_usd_1h: number;
   volume_usd_6h: number;
   volume_usd_24h: number;
-  price_usd_raw_5m_ago: DecimalString;
-  price_usd_raw_15m_ago: DecimalString;
-  price_usd_raw_1h_ago: DecimalString;
-  price_usd_raw_6h_ago: DecimalString;
-  price_usd_raw_24h_ago: DecimalString;
+  price_usd_raw_5m_ago: DECIMAL_STRING;
+  price_usd_raw_15m_ago: DECIMAL_STRING;
+  price_usd_raw_1h_ago: DECIMAL_STRING;
+  price_usd_raw_6h_ago: DECIMAL_STRING;
+  price_usd_raw_24h_ago: DECIMAL_STRING;
   price_change_5m: number | null;
   price_change_15m: number | null;
   price_change_1h: number | null;
@@ -89,36 +89,36 @@ export type TokenValueByField = {
   timestamp_millis: number;
 };
 
-export type TokenField = keyof TokenValueByField;
+export type token_field = keyof token_value_by_field;
 
 // `account_id` is always first and is auto-included by the server.
-export type TokenRequestedField = Exclude<TokenField, "account_id" | "height" | "timestamp_millis">;
-export type TokenFieldValue<F extends TokenRequestedField> = TokenValueByField[F];
+export type token_requested_field = Exclude<token_field, "account_id" | "height" | "timestamp_millis">;
+export type token_field_value<f extends token_requested_field> = token_value_by_field[f];
 
 // A token row is `[account_id, ...requestedFields]` (then height/timestamp
-// come back via the response envelope, not in the row). Use `TokenRows<F>`.
-export type TokenRow<F extends readonly TokenRequestedField[]> = readonly [
+// come back via the response envelope, not in the row). Use `token_rows<F>`.
+export type token_row<f extends readonly token_requested_field[]> = readonly [
   string,
-  ...{ [K in keyof F]: F[K] extends TokenRequestedField ? TokenValueByField[F[K]] : never },
+  ...{ [k in keyof f]: f[k] extends token_requested_field ? token_value_by_field[f[k]] : never },
 ];
 
 // =========================
 // Where filters for tokens.get / tokens.subscribe.
 // =========================
-export interface TokenWhere {
+export interface token_where {
   parent?: string | readonly string[];
-  min_reputation?: Reputation;
+  min_reputation?: reputation;
   deleted?: boolean;
-  min?: Partial<Record<TokenRequestedField, number>>;
-  max?: Partial<Record<TokenRequestedField, number>>;
+  min?: Partial<Record<token_requested_field, number>>;
+  max?: Partial<Record<token_requested_field, number>>;
   created_after_millis?: number;
 }
 
 // =========================
 // Sort options. Server requires `sort` only for `fields: […]` numeric entries.
 // =========================
-export interface TokenSort {
-  by: TokenRequestedField;
+export interface token_sort {
+  by: token_requested_field;
   desc?: boolean;
 }
 
@@ -126,28 +126,28 @@ export interface TokenSort {
 // `min_change` lets you throttle when a field is sent. The server only
 // supports the documented set of threshold values per field.
 // =========================
-export type TokenMinChange = Partial<Record<TokenRequestedField, MinChangeThreshold>>;
+export type token_min_change = Partial<Record<token_requested_field, min_change_threshold>>;
 
 // =========================
 // Get params.
 // =========================
-export interface TokensGetParams<F extends readonly TokenRequestedField[] = readonly TokenRequestedField[]> {
-  fields: F;
+export interface tokens_get_params<f extends readonly token_requested_field[] = readonly token_requested_field[]> {
+  fields: f;
   ids?: readonly string[];
-  where?: TokenWhere;
-  sort?: TokenSort;
+  where?: token_where;
+  sort?: token_sort;
   limit?: number;
   offset?: number;
   precision?: number;
-  min_change?: TokenMinChange;
+  min_change?: token_min_change;
   since?: number;
 }
 
-export interface TokensGetResponse<F extends readonly TokenRequestedField[]> {
+export interface tokens_get_response<f extends readonly token_requested_field[]> {
   height: number;
   timestamp_millis: number;
-  columns: readonly ["account_id", ...F];
-  rows: ReadonlyArray<TokenRow<F>>;
+  columns: readonly ["account_id", ...f];
+  rows: ReadonlyArray<token_row<f>>;
   total: number;
   missing: readonly string[];
   resumed?: boolean;
@@ -157,18 +157,18 @@ export interface TokensGetResponse<F extends readonly TokenRequestedField[]> {
 // =========================
 // Search params.
 // =========================
-export interface TokensSearchParams<F extends readonly TokenRequestedField[]> {
+export interface tokens_search_params<f extends readonly token_requested_field[]> {
   q: string;
-  fields: F;
+  fields: f;
   limit?: number;
-  min_reputation?: Reputation;
+  min_reputation?: reputation;
   holder?: string;
   parent?: string | readonly string[];
   precision?: number;
 }
 
-export type TokensSearchResponse<F extends readonly TokenRequestedField[]> = Pick<
-  TokensGetResponse<F>,
+export type tokens_search_response<f extends readonly token_requested_field[]> = Pick<
+  tokens_get_response<f>,
   "height" | "timestamp_millis" | "columns" | "rows"
 >;
 
@@ -176,28 +176,28 @@ export type TokensSearchResponse<F extends readonly TokenRequestedField[]> = Pic
 // Subscribe params — same as get except no `offset` / `since`, plus
 // `min_interval_ms`, `snapshot`, and `resume_from`.
 // =========================
-export interface TokensSubscribeParams<F extends readonly TokenRequestedField[]> {
-  fields: F;
+export interface tokens_subscribe_params<f extends readonly token_requested_field[]> {
+  fields: f;
   ids?: readonly string[];
-  where?: TokenWhere;
-  sort?: TokenSort;
+  where?: token_where;
+  sort?: token_sort;
   limit?: number;
   precision?: number;
-  min_change?: TokenMinChange;
+  min_change?: token_min_change;
   min_interval_ms?: number;
   snapshot?: boolean;
   resume_from?: number;
 }
 
-export interface TokensSubscribeResponse<F extends readonly TokenRequestedField[]>
-  extends TokensGetResponse<F> {
+export interface tokens_subscribe_response<f extends readonly token_requested_field[]>
+  extends tokens_get_response<f> {
   resumed?: boolean;
 }
 
-export type TokenPush<F extends readonly TokenRequestedField[]> = {
+export type token_push<f extends readonly token_requested_field[]> = {
   height: number;
   timestamp_millis: number;
-  set?: Readonly<Record<string, Partial<{ [K in F[number]]: TokenValueByField[K & TokenRequestedField] }>>>;
+  set?: Readonly<Record<string, Partial<{ [k in f[number]]: token_value_by_field[k & token_requested_field] }>>>;
   created?: readonly string[];
   left?: readonly string[];
 };
@@ -206,10 +206,10 @@ export type TokenPush<F extends readonly TokenRequestedField[]> = {
 // `tokens.update` lets a subscription with `ids` add or remove tokens in
 // place. The response is a normal tokens table for the new additions.
 // =========================
-export interface SubscriptionUpdateParams {
+export interface subscription_update_params {
   add?: readonly string[];
   remove?: readonly string[];
 }
 
-export interface TokensUpdateResponse<F extends readonly TokenRequestedField[]>
-  extends TokensGetResponse<F> {}
+export interface tokens_update_response<f extends readonly token_requested_field[]>
+  extends tokens_get_response<f> {}

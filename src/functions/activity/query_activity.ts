@@ -3,16 +3,16 @@
 // transactions for a single account, newest first by default.
 // =========================
 
-import type { HttpClient } from "../../client/http_client";
+import type { http_client } from "../../client/http_client";
 import type {
-  ActivityQueryParams,
-  ActivityResponse,
+  activity_query_params,
+  activity_response,
 } from "../../types/activity";
 
 export const query_activity = async (
-  http: HttpClient,
-  params: ActivityQueryParams,
-): Promise<ActivityResponse> => {
+  http: http_client,
+  params: activity_query_params,
+): Promise<activity_response> => {
   // The activity endpoint nests its `fields` per kind; translate to dotted
   // keys (`fields.trade=…`, `fields.transfer=…`) so the URL encoder produces
   // the documented shape.
@@ -21,5 +21,5 @@ export const query_activity = async (
   for (const [kind, ks] of Object.entries(fields)) {
     if (ks && ks.length > 0) flat[`fields.${kind}`] = ks.join(",");
   }
-  return http.get<ActivityResponse>("/activity", flat);
+  return http.get<activity_response>("/activity", flat);
 };

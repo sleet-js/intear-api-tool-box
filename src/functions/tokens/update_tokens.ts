@@ -4,17 +4,17 @@
 // pattern.
 // =========================
 
-import type { WsClient } from "../../client/ws_client";
+import type { ws_client } from "../../client/ws_client";
 import type {
-  TokenRequestedField,
-  TokensUpdateResponse,
-  SubscriptionUpdateParams,
+  token_requested_field,
+  tokens_update_response,
+  subscription_update_params,
 } from "../../types/token";
 
-export const update_tokens = async <F extends readonly TokenRequestedField[]>(
-  ws: WsClient,
+export const update_tokens = async <f extends readonly token_requested_field[]>(
+  ws: ws_client,
   sub: number | string,
-  params: SubscriptionUpdateParams,
-): Promise<TokensUpdateResponse<F>> => {
-  return ws.send_update(sub, params) as Promise<TokensUpdateResponse<F>>;
+  params: subscription_update_params,
+): Promise<tokens_update_response<f>> => {
+  return ws.send_update(sub, params) as Promise<tokens_update_response<f>>;
 };

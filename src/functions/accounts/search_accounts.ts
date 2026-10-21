@@ -3,17 +3,17 @@
 // active first.
 // =========================
 
-import type { HttpClient } from "../../client/http_client";
+import type { http_client } from "../../client/http_client";
 import type {
-  AccountsSearchParams,
-  AccountsSearchResponse,
+  accounts_search_params,
+  accounts_search_response,
 } from "../../types/account";
 
 export const search_accounts = async (
-  http: HttpClient,
-  params: AccountsSearchParams,
-): Promise<AccountsSearchResponse> =>
-  http.get<AccountsSearchResponse>(
+  http: http_client,
+  params: accounts_search_params,
+): Promise<accounts_search_response> =>
+  http.get<accounts_search_response>(
     "/accounts/search",
     params as unknown as Record<string, unknown>,
   );

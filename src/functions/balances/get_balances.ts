@@ -3,18 +3,18 @@
 // balances, with optional `token_fields` for wallet views.
 // =========================
 
-import type { HttpClient } from "../../client/http_client";
+import type { http_client } from "../../client/http_client";
 import type {
-  BalancesGetResponse,
-  BalancesGetParams,
+  balances_get_response,
+  balances_get_params,
 } from "../../types/balance";
-import type { TokenRequestedField } from "../../types/token";
+import type { token_requested_field } from "../../types/token";
 
-export const get_balances = async <F extends readonly TokenRequestedField[]>(
-  http: HttpClient,
-  params: BalancesGetParams,
-): Promise<BalancesGetResponse<F>> => {
-  return http.get<BalancesGetResponse<F>>(
+export const get_balances = async <f extends readonly token_requested_field[]>(
+  http: http_client,
+  params: balances_get_params,
+): Promise<balances_get_response<f>> => {
+  return http.get<balances_get_response<f>>(
     "/balances",
     params as unknown as Record<string, unknown>,
   );

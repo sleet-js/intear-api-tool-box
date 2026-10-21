@@ -3,54 +3,54 @@
 // deposits).
 // =========================
 
-import type { DecimalString } from "../helpers/brand";
-import type { TokenRequestedField } from "./token";
-import type { MinChangeThreshold } from "./common";
+import type { DECIMAL_STRING } from "../helpers/brand";
+import type { token_requested_field } from "./token";
+import type { min_change_threshold } from "./common";
 
 export const BALANCE_SOURCES = ["direct", "native", "rhea"] as const;
-export type BalanceSource = (typeof BALANCE_SOURCES)[number];
+export type balance_source = (typeof BALANCE_SOURCES)[number];
 
-export interface BalanceRow {
+export interface balance_row {
   token: string;
-  source: BalanceSource;
-  balance: DecimalString;
+  source: balance_source;
+  balance: DECIMAL_STRING;
 }
 
-export interface BalanceTable {
+export interface balance_table {
   columns: readonly ["token", "source", "balance"];
-  rows: ReadonlyArray<readonly [string, BalanceSource, DecimalString]>;
+  rows: ReadonlyArray<readonly [string, balance_source, DECIMAL_STRING]>;
 }
 
-export interface BalancesGetParams {
+export interface balances_get_params {
   account: string;
-  sources: readonly BalanceSource[];
+  sources: readonly balance_source[];
   tokens?: readonly string[];
-  token_fields?: readonly TokenRequestedField[];
+  token_fields?: readonly token_requested_field[];
 }
 
-export interface BalancesGetResponse<F extends readonly TokenRequestedField[] = readonly TokenRequestedField[]> {
+export interface balances_get_response<f extends readonly token_requested_field[] = readonly token_requested_field[]> {
   height: number;
   timestamp_millis: number;
-  balances: BalanceTable;
+  balances: balance_table;
   unknown: readonly string[];
-  errors: Readonly<Partial<Record<BalanceSource, { code: string; message: string }>>>;
+  errors: Readonly<Partial<Record<balance_source, { code: string; message: string }>>>;
   tokens?: {
-    columns: readonly ["account_id", ...F];
-    rows: ReadonlyArray<readonly [string, ...{ [K in keyof F]: unknown }]>;
+    columns: readonly ["account_id", ...f];
+    rows: ReadonlyArray<readonly [string, ...{ [k in keyof f]: unknown }]>;
   };
 }
 
-export interface BalancesSubscribeParams extends BalancesGetParams {
-  token_min_change?: Partial<Record<TokenRequestedField, MinChangeThreshold>>;
+export interface balances_subscribe_params extends balances_get_params {
+  token_min_change?: Partial<Record<token_requested_field, min_change_threshold>>;
 }
 
-export type BalancesSubscribeResponse<F extends readonly TokenRequestedField[]> =
-  BalancesGetResponse<F>;
+export type balances_subscribe_response<f extends readonly token_requested_field[]> =
+  balances_get_response<f>;
 
-export type BalancePush = {
+export type balance_push = {
   height: number;
   timestamp_millis: number;
-  balances: Readonly<Record<string, DecimalString>>;
+  balances: Readonly<Record<string, DECIMAL_STRING>>;
   set?: Readonly<Record<string, Record<string, unknown>>>;
-  not_live?: readonly BalanceSource[];
+  not_live?: readonly balance_source[];
 };

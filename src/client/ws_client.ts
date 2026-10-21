@@ -1,11 +1,11 @@
 // =========================
-// `WsClient` — one WebSocket per `IntearApi` instance.
+// `ws_client` — one WebSocket per `intear_api` instance.
 //
 // Responsibilities:
 //   * open the socket, wait for the server `hello` before allowing requests;
 //   * assign each request a monotonic `id`, route replies back to callers;
 //   * route `sub` pushes and `sub end` messages to the matching
-//     `SubscriptionImpl`;
+//     `subscription_impl`;
 //   * auto-reconnect with backoff, re-fire any active subscriptions after the
 //     new `hello` so the server picks up where it left off.
 //
@@ -16,92 +16,92 @@
 
 import { reconnect_delay, sleep } from "../helpers/reconnect";
 import type {
-  HelloMessage,
-  Limits,
-  ServerError,
-  IdleMessage,
+  hello_message,
+  limits,
+  server_error,
+  idle_message,
 } from "../types/common";
-import type { SubscriptionUpdateParams } from "../types/token";
+import type { subscription_update_params } from "../types/token";
 
 export const DEFAULT_WS_URL = "wss://api.intea.rs/ws";
 
 const is_record = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 
-interface PendingRequest {
+interface pending_request {
   resolve: (value: unknown) => void;
   reject: (err: unknown) => void;
 }
 
-export interface WsSubscriptionHandle {
-  // Used by SubscriptionImpl to forward pushes and ends.
+export interface ws_subscription_handle {
+  // Used by subscription_impl to forward pushes and ends.
   set_result(result: unknown): void;
   push(payload: unknown): void;
   end(code: string, message: string): void;
   unsubscribe(): Promise<void>;
   // Used only for tokens.subscribe:
-  update?(params: SubscriptionUpdateParams): Promise<unknown>;
-  // Original request id (for `update`). Assigned by WsClient.subscribe()
+  update?(params: subscription_update_params): Promise<unknown>;
+  // Original request id (for `update`). Assigned by ws_client.subscribe()
   // before any user callbacks fire.
   id: number | string;
   method: string;
   params: unknown;
-  // Returns the id set by WsClient.subscribe(). Used by endpoint wrappers
+  // Returns the id set by ws_client.subscribe(). Used by endpoint wrappers
   // (e.g. tokens.subscribe) that need the id to call `tokens.update` later.
   get_id?(): number | string | null;
 }
 
-interface WsClientOptions {
+interface ws_client_options {
   url?: string;
   websocket_impl?: typeof WebSocket;
   // Resubscribe with the saved original (method, params). Wired by the
   // orchestrator so it can apply the right `resume_from` for token subs.
-  on_resubscribe?: (sub: ActiveSub) => void;
+  on_resubscribe?: (sub: active_sub) => void;
 }
 
-interface ActiveSub {
+interface active_sub {
   id: number | string;
   method: string;
   params: unknown;
-  handle: WsSubscriptionHandle;
+  handle: ws_subscription_handle;
 }
 
-export class WsClient {
+export class ws_client {
   readonly #url: string;
   readonly #websocket_impl: typeof WebSocket;
   #socket: WebSocket | null = null;
-  #hello_promise: Promise<HelloMessage> | null = null;
-  #hello_resolve: ((value: HelloMessage) => void) | null = null;
+  #hello_promise: Promise<hello_message> | null = null;
+  #hello_resolve: ((value: hello_message) => void) | null = null;
   #hello_reject: ((err: unknown) => void) | null = null;
-  #limits: Limits | null = null;
+  #limits: limits | null = null;
 
   #next_id = 1;
-  #pending = new Map<number | string, PendingRequest>();
-  #active_subs = new Map<number | string, ActiveSub>();
+  #pending = new Map<number | string, pending_request>();
+  #active_subs = new Map<number | string, active_sub>();
 
   #reconnect_attempt = 0;
   #closed = false;
-  #on_resubscribe: ((sub: ActiveSub) => void) | undefined;
-  #last_idle: IdleMessage | null = null;
+  #on_resubscribe: ((sub: active_sub) => void) | undefined;
+  #last_idle: idle_message | null = null;
 
-  constructor(opts: WsClientOptions = {}) {
+  constructor(opts: ws_client_options = {}) {
     this.#url = opts.url ?? DEFAULT_WS_URL;
     this.#websocket_impl = opts.websocket_impl ?? globalThis.WebSocket;
     this.#on_resubscribe = opts.on_resubscribe;
   }
 
-  get hello(): Promise<HelloMessage> {
+  get hello(): Promise<hello_message> {
     if (!this.#hello_promise) this.#connect();
-    return this.#hello_promise as Promise<HelloMessage>;
+    return this.#hello_promise as Promise<hello_message>;
   }
 
-  get limits(): Limits | null {
+  get limits(): limits | null {
     return this.#limits;
   }
 
   // The most recent server `idle` heartbeat, or null if none has arrived.
   // Useful for diagnostics ("is the connection actually alive?").
-  get last_idle(): IdleMessage | null {
+  get last_idle(): idle_message | null {
     return this.#last_idle;
   }
 
@@ -123,10 +123,10 @@ export class WsClient {
   }
 
   // Send a one-shot request, returning the `result` payload.
-  request<T>(method: string, params?: unknown): Promise<T> {
+  request<t>(method: string, params?: unknown): Promise<t> {
     return this.hello.then(
       () =>
-        new Promise<T>((resolve, reject) => {
+        new Promise<t>((resolve, reject) => {
           this.#enforce_pending_limit();
           const id = this.#next_id++;
           this.#pending.set(id, { resolve: resolve as (v: unknown) => void, reject });
@@ -138,16 +138,16 @@ export class WsClient {
   }
 
   // Create a subscription. Returns a handle the caller uses to drive pushes.
-  subscribe(method: string, params: unknown, handle: WsSubscriptionHandle): void {
+  subscribe(method: string, params: unknown, handle: ws_subscription_handle): void {
     void this.hello.then(() => {
       this.#enforce_sub_limit();
       const id = this.#next_id++;
       // Pre-register the handle so the first reply and any early push route
-      // back to the right SubscriptionImpl.
+      // back to the right subscription_impl.
       handle.id = id;
       handle.method = method;
       handle.params = params;
-      // Let consumers (e.g. TokenSubscriptionImpl.update()) read the id
+      // Let consumers (e.g. token_subscription_impl.update()) read the id
       // even after the handle has been passed through several layers.
       handle.get_id = (): number | string => id;
       this.#active_subs.set(id, { id, method, params, handle });
@@ -170,7 +170,7 @@ export class WsClient {
   // first reply back as a result of the original subscription's `update()`.
   send_update(
     sub_id: number | string,
-    params: SubscriptionUpdateParams,
+    params: subscription_update_params,
   ): Promise<unknown> {
     return this.request("tokens.update", { sub: sub_id, ...params });
   }
@@ -185,7 +185,7 @@ export class WsClient {
     const ws = new this.#websocket_impl(this.#url);
     this.#socket = ws;
 
-    const hello_promise = new Promise<HelloMessage>((resolve, reject) => {
+    const hello_promise = new Promise<hello_message>((resolve, reject) => {
       this.#hello_resolve = resolve;
       this.#hello_reject = reject;
     });
@@ -290,7 +290,7 @@ export class WsClient {
     const msg = parsed as Record<string, unknown>;
 
     if ("hello" in msg) {
-      const hello = msg["hello"] as HelloMessage;
+      const hello = msg["hello"] as hello_message;
       this.#limits = hello.limits;
       // The very first request that was awaiting the hello resumes now.
       this.#hello_resolve?.(hello);
@@ -300,7 +300,7 @@ export class WsClient {
       // The server sends `idle` on a heartbeat interval when nothing else
       // is flowing. We only record the latest one for diagnostics; liveness
       // is the reconnect backoff's job, not a client-side timer.
-      this.#last_idle = msg["idle"] as IdleMessage;
+      this.#last_idle = msg["idle"] as idle_message;
       return;
     }
     if ("sub" in msg) {
@@ -322,7 +322,7 @@ export class WsClient {
     const tm = raw["timestamp_millis"] as number;
 
     if ("end" in raw) {
-      const end_val = raw["end"] as ServerError;
+      const end_val = raw["end"] as server_error;
       sub.handle.end(end_val.code, end_val.message);
       this.#active_subs.delete(sub_id);
       return;

@@ -3,21 +3,21 @@
 // icons. Plus the limit/credit constants we hand to the WS client.
 // =========================
 
-import type { DecimalString } from "../helpers/brand";
+import type { DECIMAL_STRING } from "../helpers/brand";
 
-export interface PricesAtQuery {
+export interface prices_at_query {
   token: string;
   timestamp_millis: number;
 }
 
-export interface PricesAtParams {
-  queries: readonly PricesAtQuery[];
+export interface prices_at_params {
+  queries: readonly prices_at_query[];
 }
 
-export type PricesAtResponse = {
+export type prices_at_response = {
   height: number;
   timestamp_millis: number;
-  prices: readonly (DecimalString | null)[];
+  prices: readonly (DECIMAL_STRING | null)[];
 };
 
 // =========================
@@ -25,7 +25,7 @@ export type PricesAtResponse = {
 // but we export the field names of the parts we care about for runtime use
 // (e.g. credit cost, window labels).
 // =========================
-export interface ApiSchema {
+export interface api_schema {
   version: number;
   token_fields: ReadonlyArray<{ name: string; type: string; kind: string }>;
   windows: readonly string[];
@@ -41,18 +41,18 @@ export interface ApiSchema {
 // =========================
 // Cosmetics maps referrer/aggregator apps and user handles to names and icons.
 // =========================
-export interface CosmeticReferrer {
+export interface cosmetic_referrer {
   emoji?: string;
   telegram_custom_emoji_id?: string;
   name?: string;
   icon?: string;
 }
 
-export interface CosmeticUser {
+export interface cosmetic_user {
   emoji?: string;
 }
 
-export interface CosmeticsResponse {
-  referrers: Readonly<Record<string, CosmeticReferrer>>;
-  users: Readonly<Record<string, CosmeticUser>>;
+export interface cosmetics_response {
+  referrers: Readonly<Record<string, cosmetic_referrer>>;
+  users: Readonly<Record<string, cosmetic_user>>;
 }

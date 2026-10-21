@@ -1,5 +1,5 @@
 // =========================
-// `HttpClient` — typed `fetch` wrapper for the one-shot endpoints (plus the
+// `http_client` — typed `fetch` wrapper for the one-shot endpoints (plus the
 // HTTP-only ones: `public_key`, `stats`, `cosmetics`, icon fetches).
 //
 // Conventions:
@@ -9,26 +9,26 @@
 //     rules (list = comma-separated; nested objects use dotted keys;
 //     `where.*` keys are unprefixed; sort `-field` = descending).
 //   * `post(path, body)` sends a JSON body for params too long for a URL.
-//   * Errors throw `ApiError` with the upstream `code` and `message`.
+//   * Errors throw `api_error` with the upstream `code` and `message`.
 // =========================
 
-import type { ServerError } from "../types/common";
+import type { server_error } from "../types/common";
 
 export const DEFAULT_BASE_URL = "https://api.intea.rs";
 
-export interface ApiErrorInit {
+export interface api_error_init {
   status: number;
   body: unknown;
-  error: ServerError;
+  error: server_error;
 }
 
-export class ApiError extends Error {
+export class api_error extends Error {
   readonly status: number;
   readonly code: string;
 
-  constructor(init: ApiErrorInit) {
+  constructor(init: api_error_init) {
     super(`${init.error.code}: ${init.error.message}`);
-    this.name = "ApiError";
+    this.name = "api_error";
     this.status = init.status;
     this.code = init.error.code;
   }
@@ -51,7 +51,7 @@ export const build_query = (params: Record<string, unknown>): string => {
     if (Array.isArray(value)) {
       const csv = value
         .filter((v) => v !== undefined && v !== null)
-        .map((v) => encodeScalar(v))
+        .map((v) => encode_scalar(v))
         .join(",");
       if (csv.length > 0) parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(csv)}`);
       return;
@@ -62,7 +62,7 @@ export const build_query = (params: Record<string, unknown>): string => {
       }
       return;
     }
-    parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(encodeScalar(value))}`);
+    parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(encode_scalar(value))}`);
   };
 
   for (const [k, v] of Object.entries(params)) {
@@ -89,22 +89,22 @@ export const build_query = (params: Record<string, unknown>): string => {
 // Render a scalar for a URL value. Numbers and booleans use their literal
 // JS forms; everything else is stringified (the upstream API stringifies
 // amounts, dates-millis and account IDs).
-const encodeScalar = (v: unknown): string => {
+const encode_scalar = (v: unknown): string => {
   if (typeof v === "boolean") return v ? "true" : "false";
   if (typeof v === "number") return Number.isFinite(v) ? String(v) : "null";
   return String(v);
 };
 
-export interface HttpClientOptions {
+export interface http_client_options {
   base_url?: string;
   fetch?: typeof fetch;
 }
 
-export class HttpClient {
+export class http_client {
   readonly #base_url: string;
   readonly #fetch: typeof fetch;
 
-  constructor(opts: HttpClientOptions = {}) {
+  constructor(opts: http_client_options = {}) {
     this.#base_url = (opts.base_url ?? DEFAULT_BASE_URL).replace(/\/$/, "");
     this.#fetch = opts.fetch ?? globalThis.fetch;
   }
@@ -113,19 +113,19 @@ export class HttpClient {
     return this.#base_url;
   }
 
-  // GET with URL-encoded params. Throws on non-ok status with a typed ApiError.
-  async get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
+  // GET with URL-encoded params. Throws on non-ok status with a typed api_error.
+  async get<t>(path: string, params?: Record<string, unknown>): Promise<t> {
     const qs = params ? build_query(params) : "";
     const url = qs.length > 0 ? `${this.#base_url}${path}?${qs}` : `${this.#base_url}${path}`;
     const response = await this.#fetch(url, {
       method: "GET",
       headers: { Accept: "application/json" },
     });
-    return parse_response<T>(response);
+    return parse_response<t>(response);
   }
 
   // POST with a JSON body, for params too long for a URL.
-  async post<T>(path: string, body: unknown): Promise<T> {
+  async post<t>(path: string, body: unknown): Promise<t> {
     const response = await this.#fetch(`${this.#base_url}${path}`, {
       method: "POST",
       headers: {
@@ -134,7 +134,7 @@ export class HttpClient {
       },
       body: JSON.stringify(body),
     });
-    return parse_response<T>(response);
+    return parse_response<t>(response);
   }
 
   // Construct an icon URL; the icon image itself is fetched by the consumer.
@@ -143,13 +143,13 @@ export class HttpClient {
   }
 }
 
-const parse_response = async <T>(response: Response): Promise<T> => {
+const parse_response = async <t>(response: Response): Promise<t> => {
   let parsed: unknown;
   const text = await response.text();
   try {
     parsed = text.length > 0 ? JSON.parse(text) : null;
   } catch {
-    throw new ApiError({
+    throw new api_error({
       status: response.status,
       body: text,
       error: {
@@ -160,14 +160,14 @@ const parse_response = async <T>(response: Response): Promise<T> => {
   }
   if (!response.ok) {
     const parsed_error = is_record(parsed) ? parsed["error"] : undefined;
-    const err: ServerError =
+    const err: server_error =
       is_record(parsed_error) && typeof parsed_error["code"] === "string"
         ? { code: parsed_error["code"], message: String(parsed_error["message"] ?? "") }
         : {
             code: response.status === 404 ? "not_found" : "internal",
             message: response.statusText || `HTTP ${response.status}`,
           };
-    throw new ApiError({ status: response.status, body: parsed, error: err });
+    throw new api_error({ status: response.status, body: parsed, error: err });
   }
-  return parsed as T;
+  return parsed as t;
 };

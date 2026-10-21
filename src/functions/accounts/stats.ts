@@ -3,9 +3,9 @@
 // adoption, and totals. Cached for 10 seconds on the server.
 // =========================
 
-import type { HttpClient } from "../../client/http_client";
-import type { KeyStatsResponse } from "../../types/account";
+import type { http_client } from "../../client/http_client";
+import type { key_stats_response } from "../../types/account";
 
 export const get_key_stats = async (
-  http: HttpClient,
-): Promise<KeyStatsResponse> => http.get<KeyStatsResponse>("/stats");
+  http: http_client,
+): Promise<key_stats_response> => http.get<key_stats_response>("/stats");

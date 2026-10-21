@@ -2,43 +2,43 @@
 // Holders (a token's largest accounts).
 // =========================
 
-import type { DecimalString } from "../helpers/brand";
+import type { DECIMAL_STRING } from "../helpers/brand";
 
-export interface HolderRow {
+export interface holder_row {
   account_id: string;
-  balance: DecimalString;
+  balance: DECIMAL_STRING;
 }
 
-export interface HoldersTable {
+export interface holders_table {
   columns: readonly ["account_id", "balance"];
-  rows: ReadonlyArray<readonly [string, DecimalString]>;
+  rows: ReadonlyArray<readonly [string, DECIMAL_STRING]>;
 }
 
-export interface HoldersGetParams {
+export interface holders_get_params {
   token: string;
   limit?: number;
   cursor?: string;
 }
 
-export interface HoldersGetResponse {
+export interface holders_get_response {
   height: number;
   timestamp_millis: number;
-  columns: HoldersTable["columns"];
-  rows: HoldersTable["rows"];
+  columns: holders_table["columns"];
+  rows: holders_table["rows"];
   next_cursor: string | null;
   total: number;
 }
 
-export interface HoldersSubscribeParams {
+export interface holders_subscribe_params {
   token: string;
   top: number; // 1..1000
 }
 
-export type HoldersSubscribeResponse = HoldersGetResponse;
+export type holders_subscribe_response = holders_get_response;
 
-export type HoldersPush = {
+export type holders_push = {
   height: number;
   timestamp_millis: number;
-  set: Readonly<Record<string, DecimalString>>;
+  set: Readonly<Record<string, DECIMAL_STRING>>;
   left?: readonly string[];
 };

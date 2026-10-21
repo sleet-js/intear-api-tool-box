@@ -3,7 +3,7 @@
 // the common `{ columns, rows }` table, and the limits pulled from `hello`.
 // =========================
 
-import type { DecimalString } from "../helpers/brand";
+import type { DECIMAL_STRING } from "../helpers/brand";
 
 // =========================
 // Envelope types the server sends. Every reply and every push has
@@ -11,12 +11,12 @@ import type { DecimalString } from "../helpers/brand";
 // `timestamp_millis`; the very first message on the wire is `hello`.
 // =========================
 
-export interface ServerError {
+export interface server_error {
   code: string;
   message: string;
 }
 
-export interface Limits {
+export interface limits {
   max_pending_requests: number;
   max_subscriptions: number;
   max_ids_list: number;
@@ -26,29 +26,29 @@ export interface Limits {
   max_message_bytes: number;
 }
 
-export interface HelloMessage {
+export interface hello_message {
   version: number;
   height: number;
   timestamp_millis: number;
-  limits: Limits;
+  limits: limits;
 }
 
-export interface IdleMessage {
+export interface idle_message {
   height: number;
   timestamp_millis: number;
 }
 
-export interface ReplyEnvelope<T> {
-  result: T;
+export interface reply_envelope<t> {
+  result: t;
   credits_used: number;
 }
 
-export interface ErrorEnvelope {
-  error: ServerError;
+export interface error_envelope {
+  error: server_error;
   credits_used: number;
 }
 
-export interface PushEnvelopeBase {
+export interface push_envelope_base {
   sub: number | string;
   height: number;
   timestamp_millis: number;
@@ -60,13 +60,13 @@ export interface PushEnvelopeBase {
 // transfers, balances and holders. Each row is a tuple whose position matches
 // the column name at the same index. The first column is always the row's key
 // (account ID for tokens, event id for trades, …).
-// `TCol` is the consumer-friendly tuple of field types (in the order you asked
+// `t_col` is the consumer-friendly tuple of field types (in the order you asked
 // for them via `fields`). Use `table_to_objects(table)` if you'd rather have a
 // `Record<key, fields>` shape.
 // =========================
-export interface Table<TCol extends readonly unknown[]> {
+export interface table<t_col extends readonly unknown[]> {
   columns: readonly [string, ...string[]];
-  rows: ReadonlyArray<readonly [...TCol]>;
+  rows: ReadonlyArray<readonly [...t_col]>;
 }
 
 // =========================
@@ -74,8 +74,8 @@ export interface Table<TCol extends readonly unknown[]> {
 // additionally carry `next_cursor` and `latest_id` / `last` so a caller can
 // iterate history.
 // =========================
-export interface PagedTable<TCol extends readonly unknown[]>
-  extends Table<TCol> {
+export interface paged_table<t_col extends readonly unknown[]>
+  extends table<t_col> {
   next_cursor: string | null;
   latest_id?: number;
   last?: string;
@@ -83,7 +83,7 @@ export interface PagedTable<TCol extends readonly unknown[]>
   missing?: readonly string[];
 }
 
-export interface ResumedTable {
+export interface resumed_table {
   height: number;
   timestamp_millis: number;
   resumed: boolean;
@@ -91,12 +91,12 @@ export interface ResumedTable {
 
 // =========================
 // Reputation enum, shared by token `where: { min_reputation }` and the
-// `reputation` field on Token.
+// `reputation` field on token.
 // =========================
 export const REPUTATIONS = ["Spam", "Unknown", "NotFake", "Reputable"] as const;
-export type Reputation = (typeof REPUTATIONS)[number];
+export type reputation = (typeof REPUTATIONS)[number];
 
-export const is_reputation = (s: string): s is Reputation =>
+export const is_reputation = (s: string): s is reputation =>
   (REPUTATIONS as readonly string[]).includes(s);
 
 // =========================
@@ -114,13 +114,13 @@ export const MIN_CHANGE_THRESHOLDS = [
   "5%",
   "10%",
 ] as const;
-export type MinChangeThreshold = (typeof MIN_CHANGE_THRESHOLDS)[number];
+export type min_change_threshold = (typeof MIN_CHANGE_THRESHOLDS)[number];
 
 export const MIN_INTERVAL_MS_VALUES = [200, 600, 1000, 5000, 15000, 60000] as const;
-export type MinIntervalMs = (typeof MIN_INTERVAL_MS_VALUES)[number];
+export type min_interval_ms = (typeof MIN_INTERVAL_MS_VALUES)[number];
 
 export const PRECISION_RANGE = { MIN: 1, MAX: 30 } as const;
-export type Precision = number; // 1..30, validated at call site
+export type precision = number; // 1..30, validated at call site
 
 // =========================
 // Helpers to assert/validate numeric ranges at runtime. We use lightweight
@@ -141,7 +141,7 @@ export const assert_min_interval_ms = (n: number): void => {
 };
 
 // =========================
-// Re-export the brand so consumers can `import { DecimalString }` from a
+// Re-export the brand so consumers can `import { DECIMAL_STRING }` from a
 // single types barrel if they want.
 // =========================
-export type { DecimalString } from "../helpers/brand";
+export type { DECIMAL_STRING } from "../helpers/brand";

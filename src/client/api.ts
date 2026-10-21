@@ -1,23 +1,23 @@
 // =========================
-// `IntearApi` — the one class a consumer instantiates.
+// `intear_api` — the one class a consumer instantiates.
 //
-//   const api = new IntearApi();
+//   const api = new intear_api();
 //   const t = await api.tokens.get({ fields: ['symbol','price_usd'], ids: ['wrap.near'] });
 //   for await (const push of api.tokens.subscribe({ fields: ['price_usd'], ids: ['wrap.near'] })) { … }
 //
 // Design:
-//   * Owns one `HttpClient` and at most one `WsClient`. The WS client connects
+//   * Owns one `http_client` and at most one `ws_client`. The WS client connects
 //     lazily on the first `.subscribe(...)` call.
-//   * HTTP endpoints go through the HttpClient. Subscription endpoints go
+//   * HTTP endpoints go through the http_client. Subscription endpoints go
 //     through the WS client. Errors are surfaced uniformly.
 //   * The connection object is closed with `api.close()`.
 // =========================
 
-import { HttpClient } from "./http_client";
-import { WsClient } from "./ws_client";
-import type { HelloMessage } from "../types/common";
+import { http_client } from "./http_client";
+import { ws_client } from "./ws_client";
+import type { hello_message } from "../types/common";
 
-export interface IntearApiOptions {
+export interface intear_api_options {
   http_base_url?: string;
   ws_url?: string;
   fetch?: typeof fetch;
@@ -26,32 +26,32 @@ export interface IntearApiOptions {
   open_ws?: boolean;
 }
 
-export class IntearApi {
-  readonly http: HttpClient;
-  readonly ws: WsClient;
+export class intear_api {
+  readonly http: http_client;
+  readonly ws: ws_client;
 
   // Endpoint groups — each is built by a `bind_*(http, ws)` factory in
   // `functions/*` and assembled by `create_endpoints()` (see `./endpoints`).
   // Declared here so the whole public surface reads in one place; every
   // property is assigned in the constructor.
-  readonly tokens: TokensEndpoints;
-  readonly trades: TradesEndpoints;
-  readonly transfers: TransfersEndpoints;
-  readonly activity: ActivityEndpoints;
-  readonly candles: CandlesEndpoints;
-  readonly balances: BalancesEndpoints;
-  readonly holders: HoldersEndpoints;
-  readonly positions: PositionsEndpoints;
-  readonly accounts: AccountsEndpoints;
-  readonly prices: PricesEndpoints;
-  readonly misc: MiscEndpoints;
+  readonly tokens: tokens_endpoints;
+  readonly trades: trades_endpoints;
+  readonly transfers: transfers_endpoints;
+  readonly activity: activity_endpoints;
+  readonly candles: candles_endpoints;
+  readonly balances: balances_endpoints;
+  readonly holders: holders_endpoints;
+  readonly positions: positions_endpoints;
+  readonly accounts: accounts_endpoints;
+  readonly prices: prices_endpoints;
+  readonly misc: misc_endpoints;
 
-  constructor(opts: IntearApiOptions = {}) {
-    this.http = new HttpClient({
+  constructor(opts: intear_api_options = {}) {
+    this.http = new http_client({
       base_url: opts.http_base_url,
       fetch: opts.fetch,
     });
-    this.ws = new WsClient({
+    this.ws = new ws_client({
       url: opts.ws_url,
       websocket_impl: opts.websocket_impl,
     });
@@ -72,7 +72,7 @@ export class IntearApi {
   }
 
   /** Wait for the server's `hello` (and thus the WS connection to open). */
-  get hello(): Promise<HelloMessage> {
+  get hello(): Promise<hello_message> {
     return this.ws.hello;
   }
 
@@ -84,18 +84,18 @@ export class IntearApi {
 
 // These are forward declarations of the endpoint-group shapes — they're
 // filled in by the file below. Each `...Endpoints` interface names every
-// method the corresponding endpoint group exposes on `IntearApi`.
+// method the corresponding endpoint group exposes on `intear_api`.
 import { create_endpoints } from "./endpoints";
 import type {
-  TokensEndpoints,
-  TradesEndpoints,
-  TransfersEndpoints,
-  ActivityEndpoints,
-  CandlesEndpoints,
-  BalancesEndpoints,
-  HoldersEndpoints,
-  PositionsEndpoints,
-  AccountsEndpoints,
-  PricesEndpoints,
-  MiscEndpoints,
+  tokens_endpoints,
+  trades_endpoints,
+  transfers_endpoints,
+  activity_endpoints,
+  candles_endpoints,
+  balances_endpoints,
+  holders_endpoints,
+  positions_endpoints,
+  accounts_endpoints,
+  prices_endpoints,
+  misc_endpoints,
 } from "./endpoints";

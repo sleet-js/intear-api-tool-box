@@ -3,19 +3,19 @@
 // `after` (resume). Each push's `last` carries the cursor for reconnect.
 // =========================
 
-import type { WsClient, WsSubscriptionHandle } from "../../client/ws_client";
+import type { ws_client, ws_subscription_handle } from "../../client/ws_client";
 import type {
-  ActivitySubscribeParams,
-  ActivitySubscribeResponse,
-  ActivityPush,
+  activity_subscribe_params,
+  activity_subscribe_response,
+  activity_push,
 } from "../../types/activity";
-import { SubscriptionImpl, type Subscription } from "../../helpers/subscribe";
+import { subscription_impl, type subscription } from "../../helpers/subscribe";
 
 export const subscribe_activity = (
-  ws: WsClient,
-  params: ActivitySubscribeParams,
-): Subscription<ActivityPush, ActivitySubscribeResponse> => {
-  const sub = new SubscriptionImpl<ActivityPush, ActivitySubscribeResponse>({
+  ws: ws_client,
+  params: activity_subscribe_params,
+): subscription<activity_push, activity_subscribe_response> => {
+  const sub = new subscription_impl<activity_push, activity_subscribe_response>({
     unsubscribe_fn: async () => {
       const id = handle.get_id?.();
       if (id == null) return;
@@ -23,13 +23,13 @@ export const subscribe_activity = (
     },
   });
 
-  const handle: WsSubscriptionHandle = {
+  const handle: ws_subscription_handle = {
     id: -1,
     method: "activity.subscribe",
     params,
     get_id: () => null,
-    set_result: (r) => sub.set_result(r as ActivitySubscribeResponse),
-    push: (p) => sub.push(p as ActivityPush),
+    set_result: (r) => sub.set_result(r as activity_subscribe_response),
+    push: (p) => sub.push(p as activity_push),
     end: (code, message) => sub.end(code, message),
     unsubscribe: async () => {
       const id = handle.get_id?.();
