@@ -2,6 +2,19 @@
 // =================================================
 // account_balances — direct + native + Rhea balances for a NEAR account.
 //
+// NOTE on coverage: the Intear API only supports three balance sources
+//   - `direct`: NEP-141 tokens the account holds (indexed)
+//   - `native`: its NEAR balance, as token `near` in yoctoNEAR
+//   - `rhea`:   its deposits in Rhea (v2.ref-finance.near)
+// Positions on other DEXes/lending protocols (e.g. Linear, Meta Pool's
+// stake-deposit contracts, Astra) are NOT included in `direct` unless the
+// underlying token is a plain NEP-141 the indexer has picked up.
+//
+// For broader DEX-agnostic cost-basis, see `bin/account_positions.ts` —
+// `positions.get` is built from the account's swap history, so it covers
+// positions opened on any pool, not just Rhea. To view unindexed DEX-side
+// positions, query the DEX's own view methods via near-kit.
+//
 // Examples:
 //   bun run bin/account_balances.ts v2.ref-finance.near
 //   bun run bin/account_balances.ts intents.near --source direct,native
