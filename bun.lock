@@ -1,9 +1,9 @@
 {
-  "lockfileVersion": 2,
+  "lockfileVersion": 1,
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "intear-api-tool-box",
+      "name": "@sleet-js/intear-api-tool-box",
       "devDependencies": {
         "@types/bun": "latest",
       },

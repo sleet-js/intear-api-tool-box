@@ -1,11 +1,47 @@
 {
   "name": "@sleet-js/intear-api-tool-box",
-  "module": "src/index.ts",
+  "version": "0.1.0",
+  "description": "Typed TypeScript SDK for the Intear API (https://api.intea.rs) — token data, charts, trades, transfers, balances, holders over HTTP and a single WebSocket connection, with strict per-field types and AsyncIterable subscriptions.",
+  "license": "MIT",
+  "homepage": "https://sleet-js.near.page",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sleet-js/intear-api-tool-box.git"
+  },
   "type": "module",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "README.md",
+    "LICENSE",
+    "dist/**/*",
+    "bin/**/*"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "rm -f .tsbuildinfo && bun run tsc --build tsconfig.build.json --force",
+    "clean": "bun run tsc --build --clean && rm -rf dist .tsbuildinfo",
+    "overview": "bun run bin/one_shot_overview_bin.ts",
+    "tokens:print": "bun run bin/tokens_subscribe_print_first_push_bin.ts",
+    "trades:print": "bun run bin/trades_subscribe_first_n_bin.ts",
+    "schema": "bun run bin/schema_dump_bin.ts",
+    "icons": "bun run bin/icons_index_bin.ts"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "typescript": "^7.0.2"
   },
   "peerDependencies": {
     "typescript": "^7"
-  }
+  },
+  "//": "compatible with bun + tsc --build; emit ESM to dist/, publish dist + bin + README + LICENSE."
 }
