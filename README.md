@@ -68,7 +68,15 @@ for await (const push of sub) {
 
 Every `.subscribe(...)` call returns a `subscription<t_push, t_result>` with:
 
-- `sub.result: Promise<t_result>` — resolves once with the initial snapshot.
+- `sub.result: Promise<t_result | subscription_no_snapshot>` — resolves once, either with the initial snapshot or with a `subscription_no_snapshot` marker (when the server opened the stream without sending one — e.g. `trades.subscribe` with `history: 0`, or any filter that matches nothing). Always check before reading fields:
+  ```ts
+  const initial = await sub.result;
+  if (initial instanceof subscription_no_snapshot) {
+    /* no initial snapshot — the first push is the first thing you'll see */
+  } else {
+    for (const row of initial.rows) { /* ... */ }
+  }
+  ```
 - async iterator — yields pushes forever until the server ends or you call `sub.close()`.
 - `sub.close()` — sends `unsubscribe` and ends iteration.
 

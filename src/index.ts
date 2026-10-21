@@ -43,6 +43,10 @@ export type {
 // Thrown when a subscription ends (server-initiated `end` event).
 export { subscription_error } from "./helpers/subscribe";
 
+// Resolved into `sub.result` when the server opens a subscription without
+// sending an initial snapshot. Check for it with `instanceof`.
+export { subscription_no_snapshot } from "./helpers/subscribe";
+
 // Branded primitives — types in SCREAMING_SNAKE_CASE.
 export type {
   DECIMAL_STRING,

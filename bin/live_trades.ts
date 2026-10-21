@@ -8,7 +8,7 @@
 //   bun run bin/live_trades.ts wrap.near --history 5 --min_usd 100
 //   bun run bin/live_trades.ts wrap.near --trader intents.near --side buy
 // =================================================
-import { intear_api, subscription_error } from "../src/index";
+import { intear_api, subscription_error, subscription_no_snapshot } from "../src/index";
 import { parse_args, fail } from "./_args";
 import type { min_usd } from "../src/types/trade";
 
@@ -16,7 +16,9 @@ const USAGE = `
 Usage: bun run bin/live_trades.ts <token> [options]
 
   --history <N>       Print the last N trades (1..200) as the snapshot, then live.
-                      Default 0 (snapshot empty, only live).
+                      Default 5. The Intear API requires --history or --after_id
+                      when subscribing; pass --after_id to resume without history.
+  --after_id <id>     Resume from this trade id (no history printed).
   --side <s>          buy|sell|add_liquidity|remove_liquidity (optional)
   --min_usd <v>       one of 10|50|100|500|1000|5000|10000 (optional)
   --trader <account>  Filter by trader (optional)
@@ -39,9 +41,9 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const history_flag = flags["history"];
-  const history = typeof history_flag === "string" ? Number(history_flag) : 0;
-  if (!Number.isInteger(history) || history < 0 || history > 200) {
-    console.error("--history must be 0..200");
+  const history = typeof history_flag === "string" ? Number(history_flag) : 5;
+  if (!Number.isInteger(history) || history < 1 || history > 200) {
+    console.error("--history must be 1..200");
     process.exit(1);
   }
   const side_flag = flags["side"];
@@ -93,23 +95,28 @@ async function main(): Promise<void> {
   process.on("SIGTERM", close);
 
   try {
-    const snapshot = await sub.result;
-    if (snapshot.rows.length > 0) {
-      history_count = snapshot.rows.length;
-      if (!silent) {
-        const rows = snapshot.rows.map((r) => ({
-          id: r[0],
-          trader: r[1],
-          side: r[2],
-          amount: r[3] ?? "",
-          usd_value: r[4] ?? "",
-          time: new Date(Number(r[5])).toISOString().replace("T", " ").slice(0, 19),
-        }));
-        console.log(`\n--- history: ${snapshot.rows.length} trade(s) ---`);
-        console.table(rows);
+    // The SDK now resolves `sub.result` either with the initial snapshot
+    // OR with `subscription_no_snapshot` once the first push has been
+    // received (proof that the stream is alive but no snapshot was sent).
+    const initial = await sub.result;
+    if (!(initial instanceof subscription_no_snapshot) && initial.rows.length > 0) {
+      history_count = initial.rows.length;
+      const rows = initial.rows.map((r) => ({
+        id: r[0],
+        trader: r[1],
+        side: r[2],
+        amount: r[3] ?? "",
+        usd_value: r[4] ?? "",
+        time: new Date(Number(r[5])).toISOString().replace("T", " ").slice(0, 19),
+      }));
+      if (silent) {
+        console.log(`history: ${initial.rows.length} trade(s)`);
       } else {
-        console.log(`history: ${snapshot.rows.length} trade(s)`);
+        console.log(`\n--- history: ${initial.rows.length} trade(s) ---`);
+        console.table(rows);
       }
+    } else if (!silent) {
+      console.log("(no initial snapshot — streaming will start with the first live push)");
     }
     console.log(`\nstreaming live trades for ${token} (Ctrl+C to stop) ...\n`);
     for await (const push of sub) {

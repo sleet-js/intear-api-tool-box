@@ -6,7 +6,7 @@
 //   bun run bin/token_holders.ts wrap.near --limit 20
 //   bun run bin/token_holders.ts wrap.near --live --top 50
 // =================================================
-import { intear_api, api_error, subscription_error } from "../src/index";
+import { intear_api, api_error, subscription_error, subscription_no_snapshot } from "../src/index";
 import { parse_args, fail } from "./_args";
 
 const USAGE = `
@@ -63,15 +63,20 @@ async function main(): Promise<void> {
     process.on("SIGTERM", close);
     try {
       const snapshot = await sub.result;
-      const total_holders = snapshot.total ?? "n/a";
-      console.log(`\ntotal holders indexed: ${total_holders}`);
-      console.log(`\ntop ${snapshot.rows.length} (live, Ctrl+C to stop):`);
-      const rows = snapshot.rows.map((r, i) => ({
-        rank: i + 1,
-        account_id: r[0],
-        balance: r[1],
-      }));
-      console.table(rows);
+      if (snapshot instanceof subscription_no_snapshot) {
+        console.log("(no initial snapshot — streaming will start with the first push)");
+      } else {
+        const total_holders = snapshot.total ?? "n/a";
+        console.log(`\ntotal holders indexed: ${total_holders}`);
+        console.log(`\ntop ${snapshot.rows.length} (live, Ctrl+C to stop):`);
+        const rows = snapshot.rows.map((r, i) => ({
+          rank: i + 1,
+          account_id: r[0],
+          balance: r[1],
+        }));
+        console.table(rows);
+      }
+      console.log("\nstreaming holder updates (Ctrl+C to stop) ...\n");
       for await (const push of sub) {
         if (push.left?.length) {
           console.log(`\nleft top:  ${push.left.join(", ")}`);

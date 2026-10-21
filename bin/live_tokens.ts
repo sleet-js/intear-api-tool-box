@@ -9,7 +9,7 @@
 //   bun run bin/live_tokens.ts wrap.near usdt.tether-token.near --min_change price_usd=0.1%
 //   bun run bin/live_tokens.ts wrap.near --fields price_usd,volume_usd_24h --silent
 // =================================================
-import { intear_api, subscription_error } from "../src/index";
+import { intear_api, subscription_error, subscription_no_snapshot } from "../src/index";
 import { parse_args, fail } from "./_args";
 import type { min_change_threshold } from "../src/types/common";
 import { MIN_CHANGE_THRESHOLDS } from "../src/types/common";
@@ -111,20 +111,24 @@ async function main(): Promise<void> {
   process.on("SIGTERM", close);
 
   try {
-    const snapshot = await sub.result;
-    if (snapshot.rows.length > 0) {
-      const initial: Record<string, unknown> = {};
-      for (const row of snapshot.rows) {
+    // The SDK now resolves `sub.result` either with the snapshot or with
+    // `subscription_no_snapshot` once a push has been received.
+    const initial = await sub.result;
+    if (!(initial instanceof subscription_no_snapshot) && initial.rows.length > 0) {
+      const initial_map: Record<string, unknown> = {};
+      for (const row of initial.rows) {
         const account_id = String(row[0]);
         const fields_obj: Record<string, unknown> = {};
         for (let i = 0; i < fields.length; i++) {
           const f = fields[i];
           if (f !== undefined) fields_obj[f] = row[i + 1];
         }
-        initial[account_id] = fields_obj;
+        initial_map[account_id] = fields_obj;
       }
-      console.log(`\n--- initial snapshot (${snapshot.rows.length} tokens) ---`);
-      console.dir(initial, { depth: null, colors: false });
+      console.log(`\n--- initial snapshot (${initial.rows.length} tokens) ---`);
+      console.dir(initial_map, { depth: null, colors: false });
+    } else if (!silent) {
+      console.log("(no initial snapshot — streaming will start with the first live push)");
     }
     console.log(`\nstreaming live updates (Ctrl+C to stop) ...\n`);
     for await (const push of sub) {
