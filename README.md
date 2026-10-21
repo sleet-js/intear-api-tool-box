@@ -19,7 +19,7 @@ npm install @sleet-js/intear-api-tool-box
 ```ts
 import { intear_api } from "@sleet-js/intear-api-tool-box";
 
-const api = new intear_api();
+const api = new intear_api(); // silent by default
 
 // HTTP: one-shot query
 const tokens = await api.tokens.get({
@@ -81,6 +81,44 @@ Every `.subscribe(...)` call returns a `subscription<t_push, t_result>` with:
 - `sub.close()` — sends `unsubscribe` and ends iteration.
 
 The `token_subscription` (returned by `api.tokens.subscribe`) extends this with `update({ add, remove })` for adjusting a `tokens.subscribe` in place.
+
+## Diagnostics
+
+The SDK is **silent by default** — no `console.*` output unless you ask for it. To turn it on, pass a `level` to the constructor:
+
+```ts
+const api = new intear_api({ level: "info" });
+```
+
+Levels:
+
+| Level | What's logged |
+|---|---|
+| `none` (default) | nothing |
+| `info` | one line per HTTP request and WS round-trip, with `method`, `path` (HTTP), `id`/`sub`/`method` (WS), `status`, `duration_ms`, `credits_used` |
+| `warn` | everything in `info` plus connection drops, retries, server-side `end` events, and reply errors |
+| `debug` | adds one line per live push |
+
+Every log entry is one short `console.log` line so a grep finds it. Example output at `info` level:
+
+```
+[intear_api:info] http request method="GET" path="/tokens" url="https://api.intea.rs/tokens?fields=symbol&ids=wrap.near"
+[intear_api:info] http response method="GET" path="/tokens" status=200 duration_ms=687 credits_used=null
+[intear_api:info] ws open url="wss://api.intea.rs/ws"
+[intear_api:info] ws hello height=220966221 version=2
+[intear_api:info] ws subscribe id=1 method="tokens.subscribe"
+[intear_api:info] ws reply id=1 method="tokens.subscribe" kind="subscription" duration_ms=128 credits_used=1
+[intear_api:debug] ws push sub=1 method="tokens.subscribe" height=220966241
+```
+
+To redirect logs to pino/datadog/etc., pass your own `logger`:
+
+```ts
+const api = new intear_api({
+  level: "info",
+  logger: { info, warn, debug, error }, // implement `logger` from the SDK
+});
+```
 
 ## Example scripts
 

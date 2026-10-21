@@ -22,6 +22,8 @@ import type {
   idle_message,
 } from "../types/common";
 import type { subscription_update_params } from "../types/token";
+import { null_logger } from "../helpers/logger";
+import type { logger } from "../helpers/logger";
 
 export const DEFAULT_WS_URL = "wss://api.intea.rs/ws";
 
@@ -54,6 +56,7 @@ export interface ws_subscription_handle {
 interface ws_client_options {
   url?: string;
   websocket_impl?: typeof WebSocket;
+  logger?: logger;
   // Resubscribe with the saved original (method, params). Wired by the
   // orchestrator so it can apply the right `resume_from` for token subs.
   on_resubscribe?: (sub: active_sub) => void;
@@ -66,9 +69,16 @@ interface active_sub {
   handle: ws_subscription_handle;
 }
 
+interface request_timing {
+  id: number | string;
+  method: string;
+  start_ms: number;
+}
+
 export class ws_client {
   readonly #url: string;
   readonly #websocket_impl: typeof WebSocket;
+  readonly #logger: logger;
   #socket: WebSocket | null = null;
   #hello_promise: Promise<hello_message> | null = null;
   #hello_resolve: ((value: hello_message) => void) | null = null;
@@ -77,6 +87,7 @@ export class ws_client {
 
   #next_id = 1;
   #pending = new Map<number | string, pending_request>();
+  #timings = new Map<number | string, request_timing>();
   #active_subs = new Map<number | string, active_sub>();
 
   #reconnect_attempt = 0;
@@ -87,6 +98,7 @@ export class ws_client {
   constructor(opts: ws_client_options = {}) {
     this.#url = opts.url ?? DEFAULT_WS_URL;
     this.#websocket_impl = opts.websocket_impl ?? globalThis.WebSocket;
+    this.#logger = opts.logger ?? new null_logger();
     this.#on_resubscribe = opts.on_resubscribe;
   }
 
@@ -129,7 +141,10 @@ export class ws_client {
         new Promise<t>((resolve, reject) => {
           this.#enforce_pending_limit();
           const id = this.#next_id++;
+          const start = Date.now();
           this.#pending.set(id, { resolve: resolve as (v: unknown) => void, reject });
+          this.#timings.set(id, { id, method, start_ms: start });
+          this.#logger.info("ws request", { id, method });
           const message: Record<string, unknown> = { id, method };
           if (params !== undefined) message["params"] = params;
           this.#send(message);
@@ -150,7 +165,9 @@ export class ws_client {
       // Let consumers (e.g. token_subscription_impl.update()) read the id
       // even after the handle has been passed through several layers.
       handle.get_id = (): number | string => id;
+      this.#timings.set(id, { id, method, start_ms: Date.now() });
       this.#active_subs.set(id, { id, method, params, handle });
+      this.#logger.info("ws subscribe", { id, method });
       const message: Record<string, unknown> = { id, method, params };
       this.#send(message);
     });
@@ -193,13 +210,20 @@ export class ws_client {
 
     ws.addEventListener("open", () => {
       this.#reconnect_attempt = 0;
+      this.#logger.info("ws open", { url: this.#url });
     });
 
     ws.addEventListener("error", (event: Event) => {
+      this.#logger.warn("ws error", { type: String(event.type) });
       if (this.#hello_reject) this.#hello_reject(new Error(`WebSocket error: ${String(event.type)}`));
     });
 
-    ws.addEventListener("close", () => {
+    ws.addEventListener("close", (event: CloseEvent) => {
+      this.#logger.warn("ws close", {
+        code: event.code,
+        reason: event.reason,
+        was_clean: event.wasClean,
+      });
       this.#handle_close();
     });
 
@@ -239,10 +263,18 @@ export class ws_client {
 
   #handle_close(): void {
     if (this.#closed) return;
+    const pending_count = this.#pending.size;
+    const sub_count = this.#active_subs.size;
+    this.#logger.warn("ws handling close", {
+      pending_count,
+      sub_count,
+      reconnect_attempt: this.#reconnect_attempt + 1,
+    });
     // Reject all pending requests; subscriptions will be re-fired after the
     // new hello.
     for (const [, req] of this.#pending) req.reject(new Error("WebSocket closed"));
     this.#pending.clear();
+    this.#timings.clear();
     this.#reset_for_reconnect();
     this.#reconnect_attempt += 1;
     void sleep(reconnect_delay(this.#reconnect_attempt)).then(() => this.#reconnect());
@@ -292,6 +324,7 @@ export class ws_client {
     if ("hello" in msg) {
       const hello = msg["hello"] as hello_message;
       this.#limits = hello.limits;
+      this.#logger.info("ws hello", { height: hello.height, version: hello.version });
       // The very first request that was awaiting the hello resumes now.
       this.#hello_resolve?.(hello);
       return;
@@ -323,8 +356,15 @@ export class ws_client {
 
     if ("end" in raw) {
       const end_val = raw["end"] as server_error;
+      this.#logger.warn("ws subscription ended", {
+        sub: sub_id,
+        method: sub.method,
+        code: end_val.code,
+        message: end_val.message,
+      });
       sub.handle.end(end_val.code, end_val.message);
       this.#active_subs.delete(sub_id);
+      this.#timings.delete(sub_id);
       return;
     }
 
@@ -334,6 +374,7 @@ export class ws_client {
     delete payload["height"];
     delete payload["timestamp_millis"];
     delete payload["credits_used"];
+    this.#logger.debug("ws push", { sub: sub_id, method: sub.method, height: h });
     sub.handle.push({
       height: h,
       timestamp_millis: tm,
@@ -345,9 +386,20 @@ export class ws_client {
     const id = msg["id"] as number | string;
     const sub = this.#active_subs.get(id);
     const pending = this.#pending.get(id);
+    const timing = this.#timings.get(id);
+    const duration_ms = timing ? Date.now() - timing.start_ms : undefined;
+    const credits_used = msg["credits_used"];
 
     if ("result" in msg) {
       const result = msg["result"];
+      this.#logger.info("ws reply", {
+        id,
+        method: timing?.method,
+        kind: sub ? "subscription" : "request",
+        duration_ms,
+        credits_used,
+      });
+      this.#timings.delete(id);
       if (sub) {
         sub.handle.set_result(result);
       } else {
@@ -362,6 +414,15 @@ export class ws_client {
       const message = String(raw_error["message"] ?? "");
       const api_err = new Error(`${code}: ${message}`) as Error & { code: string };
       api_err.code = code;
+      this.#logger.warn("ws reply error", {
+        id,
+        method: timing?.method,
+        kind: sub ? "subscription" : "request",
+        duration_ms,
+        code,
+        message,
+      });
+      this.#timings.delete(id);
       if (sub) {
         sub.handle.end(code, message);
         this.#active_subs.delete(id);

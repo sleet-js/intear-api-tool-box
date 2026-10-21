@@ -13,6 +13,8 @@
 // =========================
 
 import type { server_error } from "../types/common";
+import { null_logger } from "../helpers/logger";
+import type { logger } from "../helpers/logger";
 
 export const DEFAULT_BASE_URL = "https://api.intea.rs";
 
@@ -98,15 +100,18 @@ const encode_scalar = (v: unknown): string => {
 export interface http_client_options {
   base_url?: string;
   fetch?: typeof fetch;
+  logger?: logger;
 }
 
 export class http_client {
   readonly #base_url: string;
   readonly #fetch: typeof fetch;
+  readonly #logger: logger;
 
   constructor(opts: http_client_options = {}) {
     this.#base_url = (opts.base_url ?? DEFAULT_BASE_URL).replace(/\/$/, "");
     this.#fetch = opts.fetch ?? globalThis.fetch;
+    this.#logger = opts.logger ?? new null_logger();
   }
 
   get base_url(): string {
@@ -117,15 +122,19 @@ export class http_client {
   async get<t>(path: string, params?: Record<string, unknown>): Promise<t> {
     const qs = params ? build_query(params) : "";
     const url = qs.length > 0 ? `${this.#base_url}${path}?${qs}` : `${this.#base_url}${path}`;
+    const start = Date.now();
+    this.#logger.info("http request", { method: "GET", path, url });
     const response = await this.#fetch(url, {
       method: "GET",
       headers: { Accept: "application/json" },
     });
-    return parse_response<t>(response);
+    return parse_response<t>(response, this.#logger, start, "GET", path);
   }
 
   // POST with a JSON body, for params too long for a URL.
   async post<t>(path: string, body: unknown): Promise<t> {
+    const start = Date.now();
+    this.#logger.info("http request", { method: "POST", path, base_url: this.#base_url });
     const response = await this.#fetch(`${this.#base_url}${path}`, {
       method: "POST",
       headers: {
@@ -134,7 +143,7 @@ export class http_client {
       },
       body: JSON.stringify(body),
     });
-    return parse_response<t>(response);
+    return parse_response<t>(response, this.#logger, start, "POST", path);
   }
 
   // Construct an icon URL; the icon image itself is fetched by the consumer.
@@ -143,12 +152,26 @@ export class http_client {
   }
 }
 
-const parse_response = async <t>(response: Response): Promise<t> => {
+const parse_response = async <t>(
+  response: Response,
+  logger: logger,
+  start_ms: number,
+  method: string,
+  path: string,
+): Promise<t> => {
+  const duration_ms = Date.now() - start_ms;
   let parsed: unknown;
   const text = await response.text();
   try {
     parsed = text.length > 0 ? JSON.parse(text) : null;
   } catch {
+    logger.warn("http parse failure", {
+      method,
+      path,
+      status: response.status,
+      duration_ms,
+      body_preview: text.slice(0, 200),
+    });
     throw new api_error({
       status: response.status,
       body: text,
@@ -158,6 +181,9 @@ const parse_response = async <t>(response: Response): Promise<t> => {
       },
     });
   }
+  // Emit a one-line summary at the end of every request, including errors,
+  // so a consumer with level=info sees "request sent" AND "request
+  // completed" with the outcome.
   if (!response.ok) {
     const parsed_error = is_record(parsed) ? parsed["error"] : undefined;
     const err: server_error =
@@ -167,7 +193,32 @@ const parse_response = async <t>(response: Response): Promise<t> => {
             code: response.status === 404 ? "not_found" : "internal",
             message: response.statusText || `HTTP ${response.status}`,
           };
+    logger.warn("http error", {
+      method,
+      path,
+      status: response.status,
+      duration_ms,
+      code: err.code,
+      message: err.message,
+    });
     throw new api_error({ status: response.status, body: parsed, error: err });
   }
+  logger.info("http response", {
+    method,
+    path,
+    status: response.status,
+    duration_ms,
+    credits_used: extract_credits(parsed),
+  });
   return parsed as t;
+};
+
+// Best-effort: the API sends `credits_used` at the top level of every
+// response (and `not_indexed` 503s return it too). Don't crash if it's
+// not there.
+const extract_credits = (body: unknown): number | null => {
+  if (is_record(body) && typeof body["credits_used"] === "number") {
+    return body["credits_used"];
+  }
+  return null;
 };

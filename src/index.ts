@@ -20,6 +20,12 @@ export type { intear_api_options } from "./client/api";
 export { http_client, api_error, DEFAULT_BASE_URL } from "./client/http_client";
 export { ws_client, DEFAULT_WS_URL } from "./client/ws_client";
 
+// Diagnostic logging: a pluggable sink + a verbosity level. Pass your own
+// `logger` impl to `intear_api({ logger })` to redirect (e.g. to pino,
+// winston, datadog); default sink filters by `level`.
+export { console_logger, null_logger } from "./helpers/logger";
+export type { logger, log_level } from "./helpers/logger";
+
 // Endpoint groups are accessible as named exports too, so callers can grab
 // a single group without instantiating the whole orchestrator.
 export type { tokens_endpoints } from "./functions/tokens/bind_tokens";

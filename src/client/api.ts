@@ -16,6 +16,8 @@
 import { http_client } from "./http_client";
 import { ws_client } from "./ws_client";
 import type { hello_message } from "../types/common";
+import { console_logger } from "../helpers/logger";
+import type { logger, log_level } from "../helpers/logger";
 
 export interface intear_api_options {
   http_base_url?: string;
@@ -24,11 +26,18 @@ export interface intear_api_options {
   websocket_impl?: typeof WebSocket;
   // Open the WS immediately instead of lazily on first .subscribe(...).
   open_ws?: boolean;
+  // Diagnostic logging. `level` defaults to "none" (silent). Pass a
+  // `logger` to redirect output to pino/winston/datadog/etc.; defaults
+  // to a console-backed logger filtered by level.
+  level?: log_level;
+  logger?: logger;
 }
 
 export class intear_api {
   readonly http: http_client;
   readonly ws: ws_client;
+  readonly level: log_level;
+  readonly logger: logger;
 
   // Endpoint groups — each is built by a `bind_*(http, ws)` factory in
   // `functions/*` and assembled by `create_endpoints()` (see `./endpoints`).
@@ -47,13 +56,17 @@ export class intear_api {
   readonly misc: misc_endpoints;
 
   constructor(opts: intear_api_options = {}) {
+    this.level = opts.level ?? "none";
+    this.logger = opts.logger ?? new console_logger(this.level);
     this.http = new http_client({
       base_url: opts.http_base_url,
       fetch: opts.fetch,
+      logger: this.logger,
     });
     this.ws = new ws_client({
       url: opts.ws_url,
       websocket_impl: opts.websocket_impl,
+      logger: this.logger,
     });
     if (opts.open_ws) void this.ws.hello;
 
