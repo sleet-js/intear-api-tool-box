@@ -8,18 +8,20 @@ import type { logger } from "../src/helpers/logger";
 
 const capture: (level: string) => logger = (level) => {
   const captured: string[] = [];
-  const orig = (console as unknown as Record<string, (...args: unknown[]) => void>)[level];
-  (console as unknown as Record<string, (...args: unknown[]) => void>)[level] = (line: unknown) => {
+  const console_methods = console as unknown as Record<string, ((...args: unknown[]) => void) | undefined>;
+  const orig = console_methods[level];
+  if (!orig) throw new Error(`console.${level} is unavailable`);
+  console_methods[level] = (line: unknown) => {
     captured.push(String(line));
   };
   return {
-    info: (e, f) => orig(String(e), f),
-    warn: (e, f) => orig(String(e), f),
-    debug: (e, f) => orig(String(e), f),
-    error: (e, f) => orig(String(e), f),
+    info: (e: string, f: Record<string, unknown>) => orig(String(e), f),
+    warn: (e: string, f: Record<string, unknown>) => orig(String(e), f),
+    debug: (e: string, f: Record<string, unknown>) => orig(String(e), f),
+    error: (e: string, f: Record<string, unknown>) => orig(String(e), f),
     captured,
     restore: (): void => {
-      (console as unknown as Record<string, typeof orig>)[level] = orig;
+      console_methods[level] = orig;
     },
   } as unknown as logger;
 };

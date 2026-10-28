@@ -79,10 +79,10 @@ export class console_logger implements logger {
 // out of the way.
 // =========================
 export class null_logger implements logger {
-  info(): void { /* no-op */ }
-  warn(): void { /* no-op */ }
-  debug(): void { /* no-op */ }
-  error(): void { /* no-op */ }
+  info(_event: string, _fields: Record<string, unknown>): void { /* no-op */ }
+  warn(_event: string, _fields: Record<string, unknown>): void { /* no-op */ }
+  debug(_event: string, _fields: Record<string, unknown>): void { /* no-op */ }
+  error(_event: string, _fields: Record<string, unknown>): void { /* no-op */ }
 }
 
 // Format a value for a one-line log entry. Objects flatten to JSON-ish

@@ -1,6 +1,6 @@
 {
   "name": "@sleet-js/intear-api-tool-box",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Typed TypeScript SDK for the Intear API (https://api.intea.rs) — token data, charts, trades, transfers, balances, holders over HTTP and a single WebSocket connection, with strict per-field types and AsyncIterable subscriptions.",
   "license": "MIT",
   "homepage": "https://sleet-js.near.page",
