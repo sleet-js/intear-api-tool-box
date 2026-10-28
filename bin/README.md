@@ -17,6 +17,7 @@ bun run bin/token_holders.ts wrap.near --limit 20
 bun run bin/account_balances.ts v2.ref-finance.near
 bun run bin/account_activity.ts intents.near --kinds trade,transfer
 bun run bin/account_positions.ts intents.near
+bun run bin/token_traders.ts token.intear.near --range 24h --top 10
 ```
 
 Every script accepts `--help` for usage.
@@ -37,6 +38,7 @@ Every script accepts `--help` for usage.
 | `account_balances.ts`     | direct + native + Rhea balances for an account     |
 | `account_activity.ts`     | recent trades / transfers / transactions for acct  |
 | `account_positions.ts`    | open + closed positions with realised PnL          |
+| `token_traders.ts`        | a token's top traders by PnL over a time range     |
 
 ## Conventions
 

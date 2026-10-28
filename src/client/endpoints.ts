@@ -43,6 +43,10 @@ import {
   type accounts_endpoints,
 } from "../functions/accounts/bind_accounts";
 import { bind_prices, type prices_endpoints } from "../functions/prices/bind_prices";
+import {
+  bind_traders,
+  type traders_endpoints,
+} from "../functions/traders/bind_traders";
 import { bind_misc, type misc_endpoints } from "../functions/misc/bind_misc";
 
 export type {
@@ -56,6 +60,7 @@ export type {
   positions_endpoints,
   accounts_endpoints,
   prices_endpoints,
+  traders_endpoints,
   misc_endpoints,
 };
 
@@ -73,6 +78,7 @@ export const create_endpoints = (
   positions: positions_endpoints;
   accounts: accounts_endpoints;
   prices: prices_endpoints;
+  traders: traders_endpoints;
   misc: misc_endpoints;
 } => ({
   tokens: bind_tokens(http, ws),
@@ -85,5 +91,6 @@ export const create_endpoints = (
   positions: bind_positions(http, ws),
   accounts: bind_accounts(http, ws),
   prices: bind_prices(http),
+  traders: bind_traders(http, ws),
   misc: bind_misc(http, ws),
 });
