@@ -53,6 +53,7 @@ export class intear_api {
   readonly positions: positions_endpoints;
   readonly accounts: accounts_endpoints;
   readonly prices: prices_endpoints;
+  readonly traders: traders_endpoints;
   readonly misc: misc_endpoints;
 
   constructor(opts: intear_api_options = {}) {
@@ -81,6 +82,7 @@ export class intear_api {
     this.positions = endpoints.positions;
     this.accounts = endpoints.accounts;
     this.prices = endpoints.prices;
+    this.traders = endpoints.traders;
     this.misc = endpoints.misc;
   }
 
@@ -110,5 +112,6 @@ import type {
   positions_endpoints,
   accounts_endpoints,
   prices_endpoints,
+  traders_endpoints,
   misc_endpoints,
 } from "./endpoints";

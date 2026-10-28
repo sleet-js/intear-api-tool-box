@@ -60,6 +60,7 @@ for await (const push of sub) {
 | `api.balances`    | `get`, `subscribe`                                 |
 | `api.holders`     | `get`, `subscribe`                                 |
 | `api.positions`   | `get`                                              |
+| `api.traders`     | `get`                                              |
 | `api.accounts`    | `search`, `by_public_key`, `key_stats`             |
 | `api.prices`      | `at`                                               |
 | `api.misc`        | `cosmetics`, `schema`, `icon_url`, `table_to_objects` |

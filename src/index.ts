@@ -38,6 +38,7 @@ export type { holders_endpoints } from "./functions/holders/bind_holders";
 export type { positions_endpoints } from "./functions/positions/bind_positions";
 export type { accounts_endpoints } from "./functions/accounts/bind_accounts";
 export type { prices_endpoints } from "./functions/prices/bind_prices";
+export type { traders_endpoints } from "./functions/traders/bind_traders";
 export type { misc_endpoints } from "./functions/misc/bind_misc";
 
 // Subscription shape used by every `.subscribe(...)` method.
@@ -223,5 +224,15 @@ export type {
   cosmetic_referrer,
   cosmetic_user,
 } from "./types/schema";
+
+export type {
+  trader_range,
+  trader_row,
+  traders_table,
+  traders_get_params,
+  traders_get_response,
+} from "./types/trader";
+
+export { TRADER_RANGES } from "./types/trader";
 
 export { table_to_objects } from "./functions/misc/table_helpers";
